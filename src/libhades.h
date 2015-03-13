@@ -146,8 +146,8 @@
     int eig_herm(matrix_complex_t *A, char *JOBZ, char *UPLO, matrix_t *w);
     int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex_t *vl, matrix_complex_t *vr);
 
-    double matrix_norm        (matrix_t         *A, char norm);
-    double matrix_complex_norm(matrix_complex_t *A, char norm);
+    int matrix_norm        (matrix_t         *A, char norm_type, double *norm);
+    int matrix_complex_norm(matrix_complex_t *A, char norm_type, double *norm);
 
     matrix_complex_t *matrix_complex_exp_taylor(matrix_complex_t *A, int order);
 
@@ -157,8 +157,8 @@
     int matrix_invert        (matrix_t         *A);
     int matrix_complex_invert(matrix_complex_t *A);
 
-    void rk4        (void (*f)(double t, matrix_t         *y, matrix_t         *ft, void *args), matrix_t         *yn, double t0, double t, double h, void *args);
-    void rk4_complex(void (*f)(double t, matrix_complex_t *y, matrix_complex_t *ft, void *args), matrix_complex_t *yn, double t0, double t, double h, void *args);
+    int rk4        (void (*f)(double t, matrix_t         *y, matrix_t         *ft, void *args), matrix_t         *yn, double t0, double t, double h, void *args);
+    int rk4_complex(void (*f)(double t, matrix_complex_t *y, matrix_complex_t *ft, void *args), matrix_complex_t *yn, double t0, double t, double h, void *args);
 
     double vector_dot(matrix_t *x, matrix_t *y);
     complex_t vector_complex_dot(matrix_complex_t *x, matrix_complex_t *y);
