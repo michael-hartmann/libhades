@@ -1075,24 +1075,55 @@ int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex
  *  @{
  */
 
+/** macro to calculate matrix norm */
 #define MATRIX_NORM(FUNCTION_NAME, MTYPE, LAPACK_FUNC) \
-double FUNCTION_NAME(MTYPE *A, char norm) \
+int FUNCTION_NAME(MTYPE *A, char norm_type, double *norm) \
 { \
     double *work = NULL; \
-    double result; \
 \
-    if(norm == 'I') \
+    if(norm_type == 'I') \
+    { \
         work = malloc_cb(A->rows*sizeof(double)); \
+        if(work == NULL) \
+            return LIBHADES_ERROR_OOM; \
+    } \
 \
-    result = LAPACK_FUNC(&norm, &A->rows, &A->columns, A->M, &A->rows, work); \
+    *norm = LAPACK_FUNC(&norm_type, &A->rows, &A->columns, A->M, &A->rows, work); \
 \
     if(work != NULL) \
         free_cb(work); \
 \
-    return result; \
+    return 0; \
 }
 
+/** @brief Compute matrix norm for real matrix
+ *
+ * See dlange.
+ *
+ * Returns
+ *      max(abs(A(i,j))), norm_type = 'M' or 'm'
+ *      norm1(A),         norm_type = '1', 'O' or 'o'
+ *      normI(A),         norm_type = 'I' or 'i'
+ *      normF(A),         norm_type = 'F', 'f', 'E' or 'e'
+ *
+ * @param [in]  A real matrix
+ * @param [in]  norm_type type of norm, e.g. 'F' for Frobenius norm
+ * @param [out] norm value of norm
+ *
+ * @retval ret 0 if successfull, <0 otherwise
+ */
 MATRIX_NORM(matrix_norm, matrix_t, dlange_);
+
+/** @brief Compute matrix norm for complex matrix
+ *
+ * See matrix_norm.
+ *
+ * @param [in]  A complex matrix
+ * @param [in]  norm_type type of norm, e.g. 'F' for Frobenius norm
+ * @param [out] norm value of norm
+ *
+ * @retval ret 0 if successfull, <0 otherwise
+ */
 MATRIX_NORM(matrix_complex_norm, matrix_complex_t, zlange_);
 
 matrix_complex_t *matrix_complex_exp_taylor(matrix_complex_t *A, int order)
@@ -1264,8 +1295,11 @@ int matrix_solve(matrix_t *A, matrix_t *b)
     int N = A->min;
     char trans = 'N';
     int nrhs = b->columns;
-    int *ipiv = malloc_cb(N*sizeof(int));
     int info = -1;
+    int *ipiv = malloc_cb(N*sizeof(int));
+
+    if(ipiv == NULL)
+        return LIBHADES_ERROR_OOM;
 
     matrix_lu_decomposition(A, ipiv);
     dgetrs_(&trans, &N, &nrhs, A->M, &N, ipiv, b->M, &N, &info);
@@ -1287,9 +1321,10 @@ static void _cblas_zaxpy(const int N, const double alpha, const void *X, const i
 
 /* d/dt y = f(t,y), y(0)=y0 */
 #define RK4(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, MATRIX_ADD, MATRIX_FREE) \
-void FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *args), MATRIX_TYPE *y0, double t0, double t, double h, void *args) \
+int FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *args), MATRIX_TYPE *y0, double t0, double t, double h, void *args) \
 { \
     const int N = y0->rows; \
+    int ret = 0; \
     double tn = t0; \
     const int steps = ceil((t-t0)/h); \
     h = t/steps; \
@@ -1307,6 +1342,12 @@ void FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *ar
     TYPE *k4M = k4->M; \
 \
     MATRIX_TYPE *z = MATRIX_ALLOC(N,1); \
+\
+    if(k1 == NULL || k2 == NULL || k3 == NULL || k4 == NULL || z == NULL)\
+    { \
+        ret = LIBHADES_ERROR_OOM; \
+        goto out; \
+    } \
 \
     for(int n = 0; n < steps; n++) \
     { \
@@ -1331,11 +1372,14 @@ void FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *ar
             ynM[j] += h/6*(k1M[j]+2*(k2M[j]+k3M[j])+k4M[j]); \
     } \
  \
+    out: \
     MATRIX_FREE(k1); \
     MATRIX_FREE(k2); \
     MATRIX_FREE(k3); \
     MATRIX_FREE(k4); \
     MATRIX_FREE(z); \
+\
+    return ret; \
 } \
 
 
