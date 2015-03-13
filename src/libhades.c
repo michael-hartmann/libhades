@@ -41,10 +41,11 @@ static void xfree(void *ptr)
 static void *(*malloc_cb)(size_t) = &xmalloc;
 static void  (*free_cb)(void *)   = &xfree;
 
-/** \defgroup misc misc functions
+/** \defgroup misc miscellaneous functions
  *  @{
  */
 
+/** macro to create functions argmin, argmax, argabsmin, argabsmax */
 #define ARGXXX(FUNCTION_NAME, FUNCTION, RELATION) \
 int FUNCTION_NAME(double list[], int size) \
 { \
@@ -99,11 +100,15 @@ ARGXXX(argabsmax, fabs, >)
  */
 
 
+/** macro to create a diagnal matrix out of a vector */
 #define MATRIX_DIAG(FUNCTION_NAME, MATRIX_TYPE, ZEROS) \
 MATRIX_TYPE *FUNCTION_NAME(MATRIX_TYPE *v) \
 { \
     int dim = v->size; \
     MATRIX_TYPE *A = ZEROS(dim, dim, NULL); \
+    if(A == NULL) \
+        return NULL; \
+\
     for(int i = 0; i < dim; i++) \
         matrix_set(A, i,i, v->M[i]); \
 \
@@ -114,7 +119,7 @@ MATRIX_TYPE *FUNCTION_NAME(MATRIX_TYPE *v) \
  *
  * @param [in] v row or column vector
  *
- * @retval A, A = diag(v)
+ * @retval A A = diag(v) if successfull, NULL otherwise
  */
 MATRIX_DIAG(matrix_diag, matrix_t, matrix_zeros)
 
@@ -122,7 +127,7 @@ MATRIX_DIAG(matrix_diag, matrix_t, matrix_zeros)
  *
  * @param [in] v row or column vector
  *
- * @retval A, A = diag(v)
+ * @retval A A = diag(v) if successfull, NULL otherwise
  */
 MATRIX_DIAG(matrix_complex_diag, matrix_complex_t, matrix_complex_zeros)
 
@@ -143,6 +148,7 @@ void matrix_set_alloc(void *(*_malloc_cb)(size_t), void  (*_free_cb)(void *))
 }
 
 
+/** macro for copying matrices. */
 #define MATRIX_COPY(FUNCTION_NAME, MTYPE, TYPE, ALLOC) \
 MTYPE *FUNCTION_NAME(MTYPE *A) \
 { \
@@ -156,7 +162,7 @@ MTYPE *FUNCTION_NAME(MTYPE *A) \
     copy->size    = A->size; \
     copy->type    = A->type; \
     copy->view    = 0; \
-    memcpy(copy->M, A->M, copy->rows*copy->columns*sizeof(TYPE)); \
+    memcpy(copy->M, A->M, copy->size*sizeof(TYPE)); \
     return copy; \
 }
 
@@ -178,7 +184,7 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
  *
  * @param [in] A complex matrix
  *
- * @retval C copy of A
+ * @retval C copy of A if successfull, NULL otherwise
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
 
@@ -189,7 +195,7 @@ MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_all
  *
  * @param [in] A real matrix
  *
- * @retval C
+ * @retval C copy of A if successfull, NULL otherwise
  */
 matrix_complex_t *matrix_tocomplex(matrix_t *A, matrix_complex_t *C)
 {
@@ -242,7 +248,7 @@ void matrix_fprintf(FILE *stream, matrix_t *A, const char *format, const char *s
  *
  * @param [in] stream output stream
  * @param [in] A complex matrix
- * @param [in] format output format, e.g. "+%lf%+lfi"
+ * @param [in] format output format, e.g. "%+lf%+lfi"
  * @param [in] sep separator between columns, e.g. "\t"
  * @param [in] sep_line separator between lines, e.g. "\n"
  */
@@ -264,6 +270,7 @@ void matrix_complex_fprintf(FILE *stream, matrix_complex_t *A, const char *forma
     }
 }
 
+/** macro for matrix allocations. */
 #define MATRIX_ALLOC(FUNCTION_NAME, MTYPE, TYPE) \
 MTYPE *FUNCTION_NAME(int rows, int columns) \
 { \
@@ -299,7 +306,7 @@ MTYPE *FUNCTION_NAME(int rows, int columns) \
  * @param [in] rows rows of matrix M
  * @param [in] columns columns of matrix M
  *
- * @retval real matrix A if successful, otherwise NULL
+ * @retval A real matrix if successful, NULL otherwise
  */
 MATRIX_ALLOC(matrix_alloc, matrix_t, double)
 
@@ -310,10 +317,11 @@ MATRIX_ALLOC(matrix_alloc, matrix_t, double)
  * @param [in] rows rows of matrix M
  * @param [in] columns columns of matrix M
  *
- * @retval complex matrix A if successful, otherwise NULL
+ * @retval A complex matrix if successful, otherwise NULL
  */
 MATRIX_ALLOC(matrix_complex_alloc, matrix_complex_t, complex_t)
 
+/** macro to create zero matrix */
 #define MATRIX_ZEROS(FUNCTION_NAME, MTYPE, TYPE, ALLOC, SETALL) \
 MTYPE *FUNCTION_NAME(int rows, int columns, MTYPE *A) \
 { \
@@ -338,7 +346,7 @@ MTYPE *FUNCTION_NAME(int rows, int columns, MTYPE *A) \
  * @param [in] columns columns of matrix M
  * @param [in,out] A: matrix
  *
- * @retval real matrix A if successful, otherwise NULL
+ * @retval A real matrix 0 if successful, otherwise NULL
  */
 MATRIX_ZEROS(matrix_zeros, matrix_t, double, matrix_alloc, matrix_setall)
 
@@ -350,11 +358,12 @@ MATRIX_ZEROS(matrix_zeros, matrix_t, double, matrix_alloc, matrix_setall)
  * @param [in] columns columns of matrix M
  * @param [in,out] A: matrix
  *
- * @retval complex matrix A if successful, otherwise NULL
+ * @retval A complex matrix 0 if successful, otherwise NULL
  */
 MATRIX_ZEROS(matrix_complex_zeros, matrix_complex_t, complex_t, matrix_complex_alloc, matrix_complex_setall)
 
 
+/** macro to create matrix x*Id */
 #define MATRIX_SETALL(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
 void FUNCTION_NAME(MATRIX_TYPE *A, TYPE x) \
 { \
@@ -378,6 +387,7 @@ MATRIX_SETALL(matrix_setall, matrix_t, double)
  */
 MATRIX_SETALL(matrix_complex_setall, matrix_complex_t, complex_t)
 
+/** macro to create unity matrix */
 #define MATRIX_EYE(FUNCTION_NAME, MTYPE, TYPE, ALLOC, SETALL) \
 MTYPE *FUNCTION_NAME(int dim, MTYPE *A) \
 { \
@@ -412,7 +422,7 @@ MTYPE *FUNCTION_NAME(int dim, MTYPE *A) \
  * @param [in]     dim dimension of identity matrix (ignored for A == NULL)
  * @param [in,out] A real matrix
  *
- * @retval identity matrix A if successful, otherwise NULL
+ * @retval A identity matrix if successful, NULL otherwise
  */
 MATRIX_EYE(matrix_eye, matrix_t, double, matrix_alloc, matrix_setall)
 
@@ -423,11 +433,12 @@ MATRIX_EYE(matrix_eye, matrix_t, double, matrix_alloc, matrix_setall)
  * @param [in]     dim dimension of identity matrix (ignored for A == NULL)
  * @param [in,out] A complex matrix
  *
- * @retval identity matrix A if successful, otherwise NULL
+ * @retval A identity matrix if successful, NULL otherwise
  */
 MATRIX_EYE(matrix_complex_eye, matrix_complex_t, complex_t, matrix_complex_alloc, matrix_complex_setall)
 
 
+/** macro to free matrices */
 #define MATRIX_FREE(FUNCTION_NAME, MTYPE) \
 void FUNCTION_NAME(MTYPE *A) \
 { \
@@ -466,6 +477,7 @@ MATRIX_FREE(matrix_complex_free, matrix_complex_t)
  *  @{
  */
 
+/** macro to calculate trace of matrix */
 #define MATRIX_TRACE(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
 TYPE FUNCTION_NAME(MATRIX_TYPE *A) \
 { \
@@ -482,7 +494,7 @@ TYPE FUNCTION_NAME(MATRIX_TYPE *A) \
  *
  * @param [in] A complex matrix
  *
- * @retval trace, trace=Tr(A)
+ * @retval x with x=Tr(A)
  */
 MATRIX_TRACE(matrix_trace, matrix_t, double)
 
@@ -490,7 +502,7 @@ MATRIX_TRACE(matrix_trace, matrix_t, double)
  *
  * @param [in] A complex matrix
  *
- * @retval trace, trace=Tr(A)
+ * @retval z with z=Tr(A)
  */
 MATRIX_TRACE(matrix_complex_trace, matrix_complex_t, complex_t)
 
@@ -505,7 +517,7 @@ MATRIX_TRACE(matrix_complex_trace, matrix_complex_t, complex_t)
  * @param [in] A real matrix
  * @param [in] B real matrix
  *
- * @retval trace, trace=Tr(A*B)
+ * @retval x with x=Tr(A*B)
  */
 double matrix_trace_AB(matrix_t *A, matrix_t *B)
 {
@@ -527,14 +539,12 @@ double matrix_trace_AB(matrix_t *A, matrix_t *B)
  * @param [in] A complex matrix
  * @param [in] B complex matrix
  *
- * @retval trace, trace=Tr(A*B)
+ * @retval z with z=Tr(A*B)
  */
 complex_t matrix_trace_complex_AB(matrix_complex_t *A, matrix_complex_t *B)
 {
     const int dim = A->rows;
     complex_t sum = 0;
-    //const complex_t const *M1 = A->M;
-    //const complex_t const *M2 = B->M;
 
     for(int i = 0; i < dim; i++)
         for(int k = 0; k < dim; k++)
@@ -550,7 +560,7 @@ complex_t matrix_trace_complex_AB(matrix_complex_t *A, matrix_complex_t *B)
  * @param [in] A complex matrix
  * @param [in] B complex matrix
  *
- * @retval trace, trace=Re(Tr(A*B))
+ * @retval x with x=Re(Tr(A*B))
  */
 double matrix_trace_complex_AB_real(matrix_complex_t *A, matrix_complex_t *B)
 {
@@ -573,6 +583,7 @@ double matrix_trace_complex_AB_real(matrix_complex_t *A, matrix_complex_t *B)
  *  @{
  */
 
+/** macro to create Kronecker product */
 #define MATRIX_KRON(FUNCTION_NAME, MTYPE, TYPE, ALLOC, SETALL) \
 MTYPE *FUNCTION_NAME(MTYPE *A, MTYPE *B, MTYPE *C) \
 { \
@@ -640,6 +651,7 @@ MATRIX_KRON(matrix_complex_kron, matrix_complex_t, complex_t, matrix_complex_all
  */
 
 
+/** macro to multiply matrix with scalar factor */
 #define MATRIX_MULT_SCALAR(FUNCTION_NAME, MTYPE, TYPE) \
 void FUNCTION_NAME(MTYPE *A, TYPE alpha) \
 { \
@@ -768,6 +780,7 @@ MATRIX_MULT(matrix_mult, matrix_t, double, matrix_alloc, cblas_dgemm, +)
  */
 MATRIX_MULT(matrix_complex_mult, matrix_complex_t, complex_t, matrix_complex_alloc, cblas_zgemm, &)
 
+/** macro to add two matrices */
 #define MATRIX_ADD(FUNCTION_NAME, TYPE1, MTYPE1, TYPE2, MTYPE2) \
 int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
 { \
@@ -794,7 +807,7 @@ int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
  *
  * Calculate A+alpha*B -> C.
  *
- * The result is be stored in C. If C is NULL, the result is stored in A.
+ * The result will be stored in C. If C is NULL, the result is stored in A.
  *
  * @param [in,out] A real matrix
  * @param [in] B real matrix
@@ -807,7 +820,7 @@ MATRIX_ADD(matrix_add, double, matrix_t, double, matrix_t)
  *
  * Calculate A+alpha*B -> C.
  *
- * The result is be stored in C. If C is NULL, the result is stored in A.
+ * The result will be stored in C. If C is NULL, the result is stored in A.
  *
  * @param [in,out] A complex matrix
  * @param [in] B complex matrix
@@ -820,7 +833,7 @@ MATRIX_ADD(matrix_complex_add, complex_t, matrix_complex_t, complex_t, matrix_co
  *
  * Calculate A+alpha*B -> C.
  *
- * The result is be stored in C. If C is NULL, the result is stored in A.
+ * The result will be stored in C. If C is NULL, the result is stored in A.
  *
  * @param [in,out] A complex matrix
  * @param [in] B real matrix
@@ -860,7 +873,7 @@ void FUNCTION_NAME(MTYPE *A) \
  *
  * @param [in,out] A real matrix
  *
- * @retval A, A=A^T
+ * @retval C with C=A^T
  */
 MATRIX_TRANSPOSE(matrix_transpose, matrix_t, double)
 
@@ -870,7 +883,7 @@ MATRIX_TRANSPOSE(matrix_transpose, matrix_t, double)
  *
  * @param [in,out] A complex matrix
  *
- * @retval A, A=A^T
+ * @retval C with C=A^T
  */
 MATRIX_TRANSPOSE(matrix_complex_transpose, matrix_complex_t, complex_t)
 
@@ -1069,12 +1082,12 @@ double FUNCTION_NAME(MTYPE *A, char norm) \
     double result; \
 \
     if(norm == 'I') \
-        work = xmalloc(A->rows*sizeof(double)); \
+        work = malloc_cb(A->rows*sizeof(double)); \
 \
     result = LAPACK_FUNC(&norm, &A->rows, &A->columns, A->M, &A->rows, work); \
 \
     if(work != NULL) \
-        xfree(work); \
+        free_cb(work); \
 \
     return result; \
 }
@@ -1251,13 +1264,13 @@ int matrix_solve(matrix_t *A, matrix_t *b)
     int N = A->min;
     char trans = 'N';
     int nrhs = b->columns;
-    int *ipiv = xmalloc(N*sizeof(int));
+    int *ipiv = malloc_cb(N*sizeof(int));
     int info = -1;
 
     matrix_lu_decomposition(A, ipiv);
     dgetrs_(&trans, &N, &nrhs, A->M, &N, ipiv, b->M, &N, &info);
 
-    xfree(ipiv);
+    free_cb(ipiv);
 
     return info;
 }
