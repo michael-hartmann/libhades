@@ -170,4 +170,6 @@
 
     int matrix_solve(matrix_t *A, matrix_t *b);
 
+    int newton_mdim(void (*f)(matrix_t *, matrix_t *, void *), void (*Jacobian)(matrix_t *, matrix_t *, void *), matrix_t *xn, double eps, int maxiter, void *args);
+
 #endif
