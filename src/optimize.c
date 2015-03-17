@@ -1,4 +1,17 @@
+/**
+ * @file   optimize.c
+ * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
+ * @date   March, 2015
+ * @brief  optimization
+ */
+
 #include <libhades.h>
+#include <libhades/optimize.h>
+
+/** \defgroup optimization Optimization
+ *  @{
+ */
+
 
 /** @brief Find roots of a multi-dimensional function f(x)
  *
@@ -52,3 +65,5 @@ int newton_mdim(void (*f)(matrix_t *, matrix_t *, void *), void (*Jacobian)(matr
     else
         return -i;
 }
+
+/** @}*/

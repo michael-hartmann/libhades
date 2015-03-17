@@ -1,3 +1,11 @@
+/**
+ * @file   odeint.c
+ * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
+ * @date   March, 2015
+ * @brief  ordinary and symplectic Runge Kutta 4th order
+ */
+
+
 #include <math.h>
 #include <libhades.h>
 #include <libhades/optimize.h>
@@ -27,6 +35,9 @@ typedef struct {
     matrix_t *f_xi1, *f_xi2, *f11, *f12, *f21, *f22;
 } rk4_params;
 
+/** \defgroup odeint Integration of ordinary differential equations
+ *  @{
+ */
 
 /* d/dt y = f(t,y), y(0)=y0 */
 #define RK4(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, MATRIX_ADD, MATRIX_FREE) \
@@ -112,7 +123,7 @@ int FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *arg
  */
 RK4(rk4, double, matrix_t, matrix_alloc, matrix_add, matrix_free);
 
-/* @brief Ruge Kutta 4th order for complex ODE
+/** @brief Ruge Kutta 4th order for complex ODE
  *
  * See rk4.
  */
@@ -322,7 +333,7 @@ void rk4_symplectic_set_Jf_of_t(rk4_symplectic_t *self, int boolean)
 }
 
 
-/* @brief Integrate differential equation
+/** @brief Integrate differential equation
  *
  * 
  * @param self  [in,out] symplectic Runge Kutta object
@@ -435,3 +446,5 @@ out:
 
     return ret;
 }
+
+/** @}*/
