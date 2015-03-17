@@ -157,9 +157,6 @@
     int matrix_invert        (matrix_t         *A);
     int matrix_complex_invert(matrix_complex_t *A);
 
-    int rk4        (void (*f)(double t, matrix_t         *y, matrix_t         *ft, void *args), matrix_t         *yn, double t0, double t, double h, void *args);
-    int rk4_complex(void (*f)(double t, matrix_complex_t *y, matrix_complex_t *ft, void *args), matrix_complex_t *yn, double t0, double t, double h, void *args);
-
     double vector_dot(matrix_t *x, matrix_t *y);
     complex_t vector_complex_dot(matrix_complex_t *x, matrix_complex_t *y);
 
@@ -169,7 +166,4 @@
     int sparse_complex_eig(int nx, int nev, char *which, void (*Av)(int nx, complex_t *in, complex_t *out, void *data), complex_t *d, int mxiter, double tol, void *data);
 
     int matrix_solve(matrix_t *A, matrix_t *b);
-
-    int newton_mdim(void (*f)(matrix_t *, matrix_t *, void *), void (*Jacobian)(matrix_t *, matrix_t *, void *), matrix_t *xn, double eps, int maxiter, void *args);
-
 #endif
