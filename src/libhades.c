@@ -150,41 +150,48 @@ void matrix_set_alloc(void *(*_malloc_cb)(size_t), void  (*_free_cb)(void *))
 
 /** macro for copying matrices. */
 #define MATRIX_COPY(FUNCTION_NAME, MTYPE, TYPE, ALLOC) \
-MTYPE *FUNCTION_NAME(MTYPE *A) \
+MTYPE *FUNCTION_NAME(MTYPE *A, MTYPE *C) \
 { \
-    MTYPE *copy = ALLOC(A->rows, A->columns); \
-    if(copy == NULL) \
-        return NULL; \
+    if(C == NULL) { \
+        C = ALLOC(A->rows, A->columns); \
+        if(C == NULL) \
+            return NULL; \
+    } \
 \
-    copy->rows    = A->rows; \
-    copy->columns = A->columns; \
-    copy->min     = A->min; \
-    copy->size    = A->size; \
-    copy->type    = A->type; \
-    copy->view    = 0; \
-    memcpy(copy->M, A->M, copy->size*sizeof(TYPE)); \
-    return copy; \
+    C->rows    = A->rows; \
+    C->columns = A->columns; \
+    C->min     = A->min; \
+    C->size    = A->size; \
+    C->type    = A->type; \
+    C->view    = 0; \
+    memcpy(C->M, A->M, C->size*sizeof(TYPE)); \
+    return C; \
 }
 
 
 
 /** @brief Copy real matrix A
  *
- * A copy of matrix A will be returned.
+ * Copy matrix A into C. If C is null, space for the matrix C will be
+ * allocated.
  *
- * @param [in] A real matrix
+ * @param [in]     A real matrix
+ * @param [in,out] C real matrix
  *
  * @retval C copy of A
  */
 MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
 
+
 /** @brief Copy complex matrix A
  *
- * A copy of matrix A will be returned.
+ * Copy matrix A into C. If C is null, space for the matrix C will be
+ * allocated.
  *
- * @param [in] A complex matrix
+ * @param [in]     A complex matrix
+ * @param [in,out] C complex matrix
  *
- * @retval C copy of A if successfull, NULL otherwise
+ * @retval C copy of A
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
 
@@ -1132,7 +1139,7 @@ matrix_complex_t *matrix_complex_exp_taylor(matrix_complex_t *A, int order)
     matrix_complex_t *C = matrix_complex_alloc(rows,rows);
 
     /* B = E+A/order */
-    matrix_complex_t *B = matrix_complex_copy(A);
+    matrix_complex_t *B = matrix_complex_copy(A,NULL);
     matrix_complex_mult_scalar(B, 1./order);
 
     for(int i = 0; i < rows; i++)

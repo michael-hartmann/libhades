@@ -118,8 +118,8 @@
     int matrix_complex_add     (matrix_complex_t *A, matrix_complex_t *B, complex_t alpha, matrix_complex_t *C);
     int matrix_complex_add_real(matrix_complex_t *A, matrix_t         *B, complex_t alpha, matrix_complex_t *C);
 
-    matrix_t         *matrix_copy        (matrix_t         *A);
-    matrix_complex_t *matrix_complex_copy(matrix_complex_t *A);
+    matrix_t         *matrix_copy        (matrix_t         *A, matrix_t         *C);
+    matrix_complex_t *matrix_complex_copy(matrix_complex_t *A, matrix_complex_t *C);
 
     matrix_complex_t *matrix_tocomplex(matrix_t *A, matrix_complex_t *C);
 
