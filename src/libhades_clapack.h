@@ -7222,14 +7222,14 @@ doublereal zlantr_(char *norm, char *uplo, char *diag, integer *m, integer *n,
 /* Subroutine */ int dlamc1_(integer *beta, integer *t, logical *rnd, logical 
 	*ieee1);
 
-doublereal dsecnd_();
+//doublereal dsecnd_();
 
 /* Subroutine */ int ilaver_(integer *vers_major__, integer *vers_minor__, 
 	integer *vers_patch__);
 
 logical lsame_(char *ca, char *cb);
 
-doublereal second_();
+//doublereal second_();
 
 doublereal slamch_(char *cmach);
 
