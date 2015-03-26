@@ -176,7 +176,7 @@ void rk4_symplectic_free(rk4_symplectic_t *self)
 }
 
 
-static inline double interpolate(double z, double x[3], double f[3])
+static inline void interpolate(const double t1, const double t2, const double x[3], const double f[3], double *w1, double *w2)
 {
     double a0,a1,a2;
 
@@ -184,7 +184,8 @@ static inline double interpolate(double z, double x[3], double f[3])
     a1 = (f[1]-a0)/( x[1]-x[0] );
     a2 = ( (f[2]-f[0])/(x[2]-x[0]) - a1 )/(x[2]-x[1]);
 
-    return a0 + (z-x[0])*( a1 + a2*(z-x[1]) );
+    *w1 = a0 + (t1-x[0])*( a1 + a2*(t1-x[1]) );
+    *w2 = a0 + (t2-x[0])*( a1 + a2*(t2-x[1]) );
 }
 
 
@@ -201,10 +202,12 @@ static inline double interpolate(double z, double x[3], double f[3])
  */
 int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, double t0, int steps)
 {
+    const int dim = yn->rows;
     const double epsilon = self->epsilon;
     const double maxiter = self->maxiter;
     double tn = t0;
-    double h_last = 0;
+    double h;
+    int bye = 0;
 
     matrix_t *Z1      = self->workspace[0];
     matrix_t *Z1_last = self->workspace[1];
@@ -217,37 +220,24 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
     matrix_t *Y1 = self->workspace[6];
     matrix_t *Y2 = self->workspace[7];
 
+    /* init */
+    matrix_setall(Z1, 0);
+    matrix_setall(Z2, 0);
+
+    if(self->adapt == NULL)
+        h = (t-t0)/steps;
+    else
+        h = self->adapt(self->f, yn, t, self->args);
+
+   if((t-tn) < h)
+   {
+       h = t-tn;
+       bye = 1;
+   }
+
     while(1)
     {
-        double h;
-        int bye = 0;
-
-        if(self->adapt == NULL)
-            h = (t-t0)/steps;
-        else
-            h = self->adapt(self->f, yn, t, self->args);
-
-        if((t-tn) < h)
-        {
-            h = t-tn;
-            bye = 1;
-        }
-
         /* fixed point iteration */
-        /* XXX find better starting values */
-        {
-            matrix_setall(Z1, 0);
-            matrix_setall(Z2, 0);
-        }
-        /*
-        if(0)
-        {
-            double t[] = { tn-h_last, tn+h_last*(c1-1), tn+h_last*(c2-1) };
-            double f[3];
-
-        }
-        */
-
         for(int j = 0; ; j++)
         {
             double norm_Z1, norm_Z2;
@@ -257,14 +247,17 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
             Z2_last = self->workspace[j     % 2 + 2];
             Z2      = self->workspace[(j+1) % 2 + 2];
 
+            /* ynpZ1 = yn+Z1, ynpZ2 = yn+Z2 */
             matrix_add(yn, Z1_last, 1, ynpZ1);
             matrix_add(yn, Z2_last, 1, ynpZ2);
 
+            /* Z1 = a11*h*f(tn+c1*h, yn+Z1) + a12*h*f(tn+c1*h, yn+Z2) */
             self->f(Z1, ynpZ1, tn+c1*h, self->args);
             matrix_mult_scalar(Z1, a11*h);
             self->f(Y1, ynpZ2, tn+c1*h, self->args);
             matrix_add(Z1, Y1, a12*h, NULL);
 
+            /* Z2 = a21*h*f(tn+c2*h, yn+Z1) + a22*h*f(tn+c2*h, yn+Z2) */
             self->f(Z2, ynpZ1, tn+c2*h, self->args);
             matrix_mult_scalar(Z2, a21*h);
             self->f(Y1, ynpZ2, tn+c2*h, self->args);
@@ -300,8 +293,37 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
         if(bye)
             return 0;
 
-        h_last = h;
         tn += h;
+
+        if(self->adapt == NULL)
+            h = (t-t0)/steps;
+        else
+            h = self->adapt(self->f, yn, t, self->args);
+
+       if((t-tn) < h)
+       {
+           h = t-tn;
+           bye = 1;
+       }
+
+        /* determine starting approximations */
+        {
+            const double t[] = { tn, tn+h*c1, tn+h*c2 };
+            double f[3];
+            f[0] = 0;
+
+            for(int k = 0; k < dim; k++)
+            {
+                double w1,w2;
+                f[1] = matrix_get(Z1, k,0);
+                f[2] = matrix_get(Z2, k,0);
+
+                interpolate(tn+c1*h, tn+c2*h, t, f, &w1, &w2);
+
+                matrix_set(Z1, k,0, w1);
+                matrix_set(Z2, k,0, w2);
+            }
+        }
     }
 }
 
