@@ -17,7 +17,8 @@
 #define a21 +0.5386751345948129
 #define a22 0.25
 
-#define b 0.5 /* b1 = b1 = b */
+#define b1 0.5
+#define b2 0.5
 
 #define c1 0.21132486540518713
 #define c2 0.7886751345948129
@@ -89,7 +90,6 @@ int FUNCTION_NAME(void (*f)(double t, MATRIX_TYPE *y, MATRIX_TYPE *ft, void *arg
     return ret; \
 } \
 
-
 /** @brief Ruge Kutta 4th order for real ODE
  *
  * Integrate vector yn=y(t0) from t=t0 to t for differential equation:
@@ -134,28 +134,59 @@ RK4(rk4_complex, complex_t, matrix_complex_t, matrix_complex_alloc, matrix_compl
  * @param f    [in]  callback of function f
  * @param args [in]  arbitrary data that is passed to f and Jf
  */
-void rk4_symplectic_init(rk4_symplectic_t *self, void (*f)(matrix_t *, matrix_t *, double, void *), void *args)
+int rk4_symplectic_init(rk4_symplectic_t *self, void (*f)(matrix_t *, matrix_t *, double, void *), int dim, void *args)
 {
-    rk4_symplectic_init_full(self, f, args, 50000, 1e-12, NULL);
+    return rk4_symplectic_init_full(self, f, dim, args, 50000, 1e-16, NULL);
 }
 
-void rk4_symplectic_init_full(rk4_symplectic_t *self, void (*f)(matrix_t *, matrix_t *, double, void *), void *args, int maxiter, double epsilon, double (adapt)(void (*f)(matrix_t *, matrix_t *, double, void *), matrix_t *y, double t, void *args))
+int rk4_symplectic_init_full(rk4_symplectic_t *self, void (*f)(matrix_t *, matrix_t *, double, void *), int dim, void *args, int maxiter, double epsilon, double (adapt)(void (*f)(matrix_t *, matrix_t *, double, void *), matrix_t *y, double t, void *args))
 {
     self->f    = f;
     self->args = args;
 
     self->maxiter = maxiter;
-    self->epsilon = 1e-12;
+    self->epsilon = epsilon;
 
     self->adapt = adapt;
+
+    /* workspace */
+    for(int i = 0; i < 8; i++)
+        self->workspace[i] = NULL;
+
+    for(int i = 0; i < 8; i++)
+    {
+        self->workspace[i] = matrix_alloc(dim,1);
+        if(self->workspace[i] == NULL)
+        {
+            rk4_symplectic_free(self);
+            return LIBHADES_ERROR_OOM;
+        }
+    }
+
+    return 0;
 }
 
 
 /** @brief Free memory of object */
 void rk4_symplectic_free(rk4_symplectic_t *self)
 {
-    return;
+    for(int i = 0; i < 8; i++)
+        if(self->workspace[i] != NULL)
+            matrix_free(self->workspace[i]);
 }
+
+
+static inline double interpolate(double z, double x[3], double f[3])
+{
+    double a0,a1,a2;
+
+    a0 = f[0];
+    a1 = (f[1]-a0)/( x[1]-x[0] );
+    a2 = ( (f[2]-f[0])/(x[2]-x[0]) - a1 )/(x[2]-x[1]);
+
+    return a0 + (z-x[0])*( a1 + a2*(z-x[1]) );
+}
+
 
 
 /** @brief Integrate differential equation
@@ -170,28 +201,21 @@ void rk4_symplectic_free(rk4_symplectic_t *self)
  */
 int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, double t0, int steps)
 {
-    int ret = 0;
-    const int rows = yn->rows;
     const double epsilon = self->epsilon;
     const double maxiter = self->maxiter;
     double tn = t0;
+    double h_last = 0;
 
-    matrix_t *Z1      = matrix_alloc(rows,1);
-    matrix_t *Z2      = matrix_alloc(rows,1);
-    matrix_t *Z1_last = matrix_alloc(rows,1);
-    matrix_t *Z2_last = matrix_alloc(rows,1);
+    matrix_t *Z1      = self->workspace[0];
+    matrix_t *Z1_last = self->workspace[1];
+    matrix_t *Z2      = self->workspace[2];
+    matrix_t *Z2_last = self->workspace[3];
 
-    matrix_t *ynpZ1 = matrix_alloc(rows, 1);
-    matrix_t *ynpZ2 = matrix_alloc(rows, 1);
+    matrix_t *ynpZ1 = self->workspace[4];
+    matrix_t *ynpZ2 = self->workspace[5];
 
-    matrix_t *f1 = matrix_alloc(rows, 1);
-    matrix_t *f2 = matrix_alloc(rows, 1);
-
-    if(Z1 == NULL || Z2 == NULL || ynpZ1 == NULL || ynpZ2 == NULL || f1 == NULL || f2 == NULL)
-    {
-        ret = LIBHADES_ERROR_OOM;
-        goto out;
-    }
+    matrix_t *Y1 = self->workspace[6];
+    matrix_t *Y2 = self->workspace[7];
 
     while(1)
     {
@@ -211,28 +235,40 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
 
         /* fixed point iteration */
         /* XXX find better starting values */
-        matrix_setall(Z1, 0);
-        matrix_setall(Z2, 0);
+        {
+            matrix_setall(Z1, 0);
+            matrix_setall(Z2, 0);
+        }
+        /*
+        if(0)
+        {
+            double t[] = { tn-h_last, tn+h_last*(c1-1), tn+h_last*(c2-1) };
+            double f[3];
+
+        }
+        */
 
         for(int j = 0; ; j++)
         {
             double norm_Z1, norm_Z2;
 
-            matrix_copy(Z1, Z1_last);
-            matrix_copy(Z2, Z2_last);
+            Z1_last = self->workspace[j     % 2];
+            Z1      = self->workspace[(j+1) % 2];
+            Z2_last = self->workspace[j     % 2 + 2];
+            Z2      = self->workspace[(j+1) % 2 + 2];
 
-            matrix_add(yn, Z1, 1, ynpZ1);
-            matrix_add(yn, Z2, 1, ynpZ2);
+            matrix_add(yn, Z1_last, 1, ynpZ1);
+            matrix_add(yn, Z2_last, 1, ynpZ2);
 
             self->f(Z1, ynpZ1, tn+c1*h, self->args);
             matrix_mult_scalar(Z1, a11*h);
-            self->f(f1, ynpZ2, tn+c1*h, self->args);
-            matrix_add(Z1, f1, a12*h, NULL);
+            self->f(Y1, ynpZ2, tn+c1*h, self->args);
+            matrix_add(Z1, Y1, a12*h, NULL);
 
             self->f(Z2, ynpZ1, tn+c2*h, self->args);
             matrix_mult_scalar(Z2, a21*h);
-            self->f(f1, ynpZ2, tn+c2*h, self->args);
-            matrix_add(Z2, f1, a22*h, NULL);
+            self->f(Y1, ynpZ2, tn+c2*h, self->args);
+            matrix_add(Z2, Y1, a22*h, NULL);
 
             matrix_add(Z1_last, Z1, -1, NULL);
             matrix_norm(Z1_last, 'F', &norm_Z1);
@@ -247,44 +283,26 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
             }
             if(j >= maxiter)
             {
-                fprintf(stderr, "Convergence error\n");
-                ret = j;
-                goto out;
+                fprintf(stderr, "Convergence error, steps=%d\n", steps);
+                return j;
             }
         }
 
         matrix_add(yn, Z1, 1, ynpZ1);
         matrix_add(yn, Z2, 1, ynpZ2);
 
-        self->f(f1, ynpZ1, tn+c1*h, self->args);
-        self->f(f2, ynpZ2, tn+c2*h, self->args);
+        self->f(Y1, ynpZ1, tn+c1*h, self->args);
+        self->f(Y2, ynpZ2, tn+c2*h, self->args);
 
-        matrix_add(f1, f2, 1, NULL);
-        matrix_add(yn, f1, h*b, NULL);
-
-        tn += h;
+        matrix_add(yn, Y1, h*b1, NULL);
+        matrix_add(yn, Y2, h*b2, NULL);
 
         if(bye)
-            break;
+            return 0;
+
+        h_last = h;
+        tn += h;
     }
-
-out:
-    if(Z1 != NULL)
-        matrix_free(Z1);
-    if(Z2 != NULL)
-        matrix_free(Z2);
-
-    if(ynpZ1 != NULL)
-        matrix_free(ynpZ1);
-    if(ynpZ2 != NULL)
-        matrix_free(ynpZ2);
-
-    if(f1 != NULL)
-        matrix_free(f1);
-    if(f2 != NULL)
-        matrix_free(f2);
-
-    return ret;
 }
 
 /** @}*/
