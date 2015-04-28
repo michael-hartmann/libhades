@@ -10,6 +10,7 @@
 #include <libhades.h>
 #include <libhades/expm.h>
 
+/* table 10.2 */
 #define THETA_3  1.5e-2
 #define THETA_5  2.5e-1
 #define THETA_7  9.5e-1
@@ -18,12 +19,14 @@
 
 #define return_error(cond,code) if((cond)) { ret = code; goto out; }
 
-static double const b3[]  = {120,60,12,1};
-static double const b5[]  = {30240,15120,3360,420,30,1};
-static double const b7[]  = {17297280, 8648640,1995840, 277200, 25200,1512, 56,1};
-static double const b9[]  = {17643225600,8821612800,2075673600,302702400,30270240, 2162160,110880,3960,90,1};
-static double const b13[] = {64764752532480000,32382376266240000,7771770303897600,1187353796428800,129060195264000,10559470521600,670442572800,33522128640,1323241920,40840800,960960,16380,182,1};
+/* table 10.4 */
+static double const b3[]  = { 120,60,12,1 };
+static double const b5[]  = { 30240,15120,3360,420,30,1 };
+static double const b7[]  = { 17297280, 8648640,1995840, 277200, 25200,1512, 56,1 };
+static double const b9[]  = { 17643225600,8821612800,2075673600,302702400,30270240, 2162160,110880,3960,90,1 };
+static double const b13[] = { 64764752532480000,32382376266240000,7771770303897600,1187353796428800,129060195264000,10559470521600,670442572800,33522128640,1323241920,40840800,960960,16380,182,1 };
 
+/* lookup list for Pade coefficients */
 static double const *b_list[] = {
     NULL, /* 0 */
     NULL, /* 1 */
@@ -41,6 +44,7 @@ static double const *b_list[] = {
     b13   /* 13 */
 };
 
+
 /* works only for square matrices and M == 3,5,7 */
 static int _expm_pade3579(matrix_complex_t *A, int M)
 {
@@ -52,17 +56,18 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
     /* evaluate (10.33) */
     {
         /* set U = b[1]*Id and V = b[0]*Id */
-        U = matrix_complex_eye(dim, NULL);
-        V = matrix_complex_eye(dim, NULL);
+        U = matrix_complex_zeros(dim,dim, NULL);
+        V = matrix_complex_zeros(dim,dim, NULL);
         return_error(U == NULL || V == NULL, LIBHADES_ERROR_OOM);
         for(int i = 0; i < dim; i++)
         {
-            matrix_set(U, i,i, matrix_get(U,i,i)*b[1]);
-            matrix_set(V, i,i, matrix_get(V,i,i)*b[0]);
+            matrix_set(U, i,i, b[1]);
+            matrix_set(V, i,i, b[0]);
         }
 
-        A2  = matrix_complex_mult(A,A,1,NULL);
+        A2 = matrix_complex_mult(A,A,1,NULL);
         return_error(A2 == NULL, LIBHADES_ERROR_OOM);
+
         A2n = matrix_complex_copy(A2,NULL);
         workspace = matrix_complex_alloc(dim,dim);
         return_error(A2 == NULL || workspace == NULL, LIBHADES_ERROR_OOM);
@@ -158,8 +163,10 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
 
     A2 = matrix_complex_mult(A, A, 1,NULL);
     return_error(A2 == NULL, LIBHADES_ERROR_OOM);
+
     A4 = matrix_complex_mult(A2,A2,1,NULL);
     return_error(A4 == NULL, LIBHADES_ERROR_OOM);
+
     A6 = matrix_complex_mult(A2,A4,1,NULL);
     return_error(A6 == NULL, LIBHADES_ERROR_OOM);
 
@@ -167,12 +174,14 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
     {
         U = matrix_complex_alloc(dim,dim);
         return_error(U == NULL, LIBHADES_ERROR_OOM);
+
         for(int i = 0; i < dim; i++)
             for(int j = 0; j < dim; j++)
                 matrix_set(U, i,j, b[13]*matrix_get(A6,i,j) + b[11]*matrix_get(A4,i,j) + b[9]*matrix_get(A2,i,j));
 
         temp = matrix_complex_mult(A6, U, 1, NULL);
         return_error(temp == NULL, LIBHADES_ERROR_OOM);
+
         for(int i = 0; i < dim; i++)
             for(int j = 0; j < dim; j++)
             {
@@ -191,6 +200,7 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
 
         V = matrix_complex_mult(A6, temp, 1, NULL);
         return_error(V == NULL, LIBHADES_ERROR_OOM);
+
         matrix_complex_free(temp);
         temp = NULL;
 
@@ -207,7 +217,6 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
     matrix_complex_free(A4);
     matrix_complex_free(A6);
     A2 = A4 = A6 = NULL;
-
 
     /* U = V+U, V = V-U */
     for(int i = 0; i < dim; i++)
