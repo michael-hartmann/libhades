@@ -3,6 +3,6 @@
 
 #include <libhades.h>
 
-matrix_complex_t *matrix_complex_expm(matrix_complex_t *A);
+int matrix_complex_expm(matrix_complex_t *A);
 
 #endif

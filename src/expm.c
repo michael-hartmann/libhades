@@ -16,6 +16,8 @@
 #define THETA_9  2.1e0
 #define THETA_13 5.4e0
 
+#define return_error(cond,code) if((cond)) { ret = code; goto out; }
+
 static double const b3[]  = {120,60,12,1};
 static double const b5[]  = {30240,15120,3360,420,30,1};
 static double const b7[]  = {17297280, 8648640,1995840, 277200, 25200,1512, 56,1};
@@ -40,43 +42,58 @@ static double const *b_list[] = {
 };
 
 /* works only for square matrices and M == 3,5,7 */
-static matrix_complex_t *_expm_pade3579(matrix_complex_t *A, int M)
+static int _expm_pade3579(matrix_complex_t *A, int M)
 {
-    matrix_complex_t *U = NULL, *V = NULL, *A2 = NULL, *A2n = NULL, *X;
+    matrix_complex_t *U = NULL, *V = NULL, *A2 = NULL, *A2n = NULL, *workspace = NULL;
+    int ret = 0;
     const int dim = A->rows;
     double const *b = b_list[M];
 
-    /* set U = b[1]*Id and V = b[0]*Id */
-    U = matrix_complex_eye(dim, NULL);
-    V = matrix_complex_eye(dim, NULL);
-    for(int i = 0; i < dim; i++)
-    {
-        matrix_set(U, i,i, matrix_get(U,i,i)*b[1]);
-        matrix_set(V, i,i, matrix_get(V,i,i)*b[0]);
-    }
-
-    A2  = matrix_complex_mult(A,A,1,NULL);
-    A2n = matrix_complex_eye(dim, NULL);
-
     /* evaluate (10.33) */
-    for(int i = 1; i <= M/2; i++)
     {
-        /* A2n = A2n*A2 */
-        matrix_complex_t *temp = matrix_complex_mult(A2n,A2,1,NULL);
-        matrix_complex_free(A2n);
-        A2n = temp;
+        /* set U = b[1]*Id and V = b[0]*Id */
+        U = matrix_complex_eye(dim, NULL);
+        V = matrix_complex_eye(dim, NULL);
+        return_error(U == NULL || V == NULL, LIBHADES_ERROR_OOM);
+        for(int i = 0; i < dim; i++)
+        {
+            matrix_set(U, i,i, matrix_get(U,i,i)*b[1]);
+            matrix_set(V, i,i, matrix_get(V,i,i)*b[0]);
+        }
 
-        matrix_complex_add(U, A2n, b[2*i+1], NULL);
-        matrix_complex_add(V, A2n, b[2*i],   NULL);
+        A2  = matrix_complex_mult(A,A,1,NULL);
+        return_error(A2 == NULL, LIBHADES_ERROR_OOM);
+        A2n = matrix_complex_copy(A2,NULL);
+        workspace = matrix_complex_alloc(dim,dim);
+        return_error(A2 == NULL || workspace == NULL, LIBHADES_ERROR_OOM);
+
+        matrix_complex_add(U, A2, b[3], NULL);
+        matrix_complex_add(V, A2, b[2], NULL);
+        for(int i = 2; i <= M/2; i++)
+        {
+            /* A2n = A2n*A2 */
+            {
+                complex_t *p;
+                matrix_complex_mult(A2n,A2,1,workspace);
+                p = workspace->M;
+                workspace->M = A2n->M;
+                A2n->M       = p;
+            }
+
+            matrix_complex_add(U, A2n, b[2*i+1], NULL);
+            matrix_complex_add(V, A2n, b[2*i],   NULL);
+        }
+
+        matrix_complex_free(workspace);
+        matrix_complex_free(A2);
+        workspace = A2 = NULL;
+
+        /* U = A*U */
+        matrix_complex_mult(A,U,1,A2n);
+        matrix_complex_free(U);
+        U   = A2n;
+        A2n = NULL;
     }
-
-    matrix_complex_free(A2);
-
-    /* U = A*U */
-    matrix_complex_mult(A,U,1,A2n);
-    matrix_complex_free(U);
-    U   = A2n;
-    A2n = NULL;
 
     /* U = V+U, V = V-U */
     for(int i = 0; i < dim; i++)
@@ -90,20 +107,49 @@ static matrix_complex_t *_expm_pade3579(matrix_complex_t *A, int M)
         }
 
     /* X = (V-U)^-1 * (V+U) */
-    matrix_complex_invert(V);
+    ret = matrix_complex_invert(V);
+    return_error(ret != 0, ret);
+    matrix_complex_mult(V,U,1,A);
 
-    X = matrix_complex_mult(V,U,1,NULL);
+out:
+    if(U != NULL)
+        matrix_complex_free(U);
+    if(V != NULL)
+        matrix_complex_free(V);
+    if(A2 != NULL)
+        matrix_complex_free(A2);
+    if(A2n != NULL)
+        matrix_complex_free(A2n);
+    if(workspace != NULL)
+        matrix_complex_free(workspace);
 
-    matrix_complex_free(U);
-    matrix_complex_free(V);
-
-    return X;
+    return ret;
 }
 
-
-matrix_complex_t *_expm_ss(matrix_complex_t *A, const double norm)
+static void _expm_square(matrix_complex_t *A, matrix_complex_t *work, const int N)
 {
-    matrix_complex_t *A2 = NULL, *A4 = NULL, *A6 = NULL, *U = NULL, *V = NULL, *temp = NULL, *X = NULL;
+    for(int i = 0; i < N/2; i++)
+    {
+        matrix_complex_mult(A,   A,   1,work);
+        matrix_complex_mult(work,work,1,A);
+    }
+
+    /* N odd */
+    if(N % 2 == 1)
+    {
+        complex_t *ptr;
+        matrix_complex_mult(A,A,1,work);
+
+        ptr     = work->M;
+        work->M = A->M;
+        A->M    = ptr;
+    }
+}
+
+static int _expm_ss(matrix_complex_t *A, const double norm)
+{
+    matrix_complex_t *A2 = NULL, *A4 = NULL, *A6 = NULL, *U = NULL, *V = NULL, *temp = NULL;
+    int ret = 0;
     const int dim = A->rows;
     double const *b = b_list[13];
     const int s = ceil(log(norm/THETA_13)/M_LN2);
@@ -111,44 +157,56 @@ matrix_complex_t *_expm_ss(matrix_complex_t *A, const double norm)
     matrix_complex_mult_scalar(A, pow(0.5,s));
 
     A2 = matrix_complex_mult(A, A, 1,NULL);
+    return_error(A2 == NULL, LIBHADES_ERROR_OOM);
     A4 = matrix_complex_mult(A2,A2,1,NULL);
+    return_error(A4 == NULL, LIBHADES_ERROR_OOM);
     A6 = matrix_complex_mult(A2,A4,1,NULL);
+    return_error(A6 == NULL, LIBHADES_ERROR_OOM);
 
     /* calculate U */
-    U = matrix_complex_alloc(dim,dim);
-    for(int i = 0; i < dim; i++)
-        for(int j = 0; j < dim; j++)
-            matrix_set(U, i,j, b[13]*matrix_get(A6,i,j) + b[11]*matrix_get(A4,i,j) + b[9]*matrix_get(A2,i,j));
+    {
+        U = matrix_complex_alloc(dim,dim);
+        return_error(U == NULL, LIBHADES_ERROR_OOM);
+        for(int i = 0; i < dim; i++)
+            for(int j = 0; j < dim; j++)
+                matrix_set(U, i,j, b[13]*matrix_get(A6,i,j) + b[11]*matrix_get(A4,i,j) + b[9]*matrix_get(A2,i,j));
 
-    temp = matrix_complex_mult(A6, U, 1, NULL);
-    for(int i = 0; i < dim; i++)
-        for(int j = 0; j < dim; j++)
-        {
-            complex_t elem = matrix_get(temp,i,j);
-            elem += b[7]*matrix_get(A6,i,j) + b[5]*matrix_get(A4,i,j) + b[3]*matrix_get(A2,i,j) + b[1]*(i == j ? 1 : 0);
-            matrix_set(temp,i,j,elem);
-        }
-    matrix_complex_mult(A,temp,1,U);
+        temp = matrix_complex_mult(A6, U, 1, NULL);
+        return_error(temp == NULL, LIBHADES_ERROR_OOM);
+        for(int i = 0; i < dim; i++)
+            for(int j = 0; j < dim; j++)
+            {
+                complex_t elem = matrix_get(temp,i,j);
+                elem += b[7]*matrix_get(A6,i,j) + b[5]*matrix_get(A4,i,j) + b[3]*matrix_get(A2,i,j) + b[1]*(i == j ? 1 : 0);
+                matrix_set(temp,i,j,elem);
+            }
+        matrix_complex_mult(A,temp,1,U);
+    }
 
     /* calculate V */
-    for(int i = 0; i < dim; i++)
-        for(int j = 0; j < dim; j++)
-            matrix_set(temp, i,j, b[12]*matrix_get(A6,i,j) + b[10]*matrix_get(A4,i,j) + b[8]*matrix_get(A2,i,j));
+    {
+        for(int i = 0; i < dim; i++)
+            for(int j = 0; j < dim; j++)
+                matrix_set(temp, i,j, b[12]*matrix_get(A6,i,j) + b[10]*matrix_get(A4,i,j) + b[8]*matrix_get(A2,i,j));
 
-    V = matrix_complex_mult(A6, temp, 1, NULL);
-    matrix_complex_free(temp);
+        V = matrix_complex_mult(A6, temp, 1, NULL);
+        return_error(V == NULL, LIBHADES_ERROR_OOM);
+        matrix_complex_free(temp);
+        temp = NULL;
 
-    for(int i = 0; i < dim; i++)
-        for(int j = 0; j < dim; j++)
-        {
-            complex_t elem = matrix_get(V,i,j);
-            elem += b[6]*matrix_get(A6,i,j) + b[4]*matrix_get(A4,i,j) + b[2]*matrix_get(A2,i,j) + b[0]*(i == j ? 1 : 0);
-            matrix_set(V,i,j,elem);
-        }
+        for(int i = 0; i < dim; i++)
+            for(int j = 0; j < dim; j++)
+            {
+                complex_t elem = matrix_get(V,i,j);
+                elem += b[6]*matrix_get(A6,i,j) + b[4]*matrix_get(A4,i,j) + b[2]*matrix_get(A2,i,j) + b[0]*(i == j ? 1 : 0);
+                matrix_set(V,i,j,elem);
+            }
+    }
 
     matrix_complex_free(A2);
     matrix_complex_free(A4);
     matrix_complex_free(A6);
+    A2 = A4 = A6 = NULL;
 
 
     /* U = V+U, V = V-U */
@@ -163,27 +221,34 @@ matrix_complex_t *_expm_ss(matrix_complex_t *A, const double norm)
         }
 
     /* X = (V-U)^-1 * (V+U) */
-    matrix_complex_invert(V);
+    ret = matrix_complex_invert(V);
+    return_error(ret != 0, ret);
 
-    X = matrix_complex_mult(V,U,1,NULL);
-
+    matrix_complex_mult(V,U,1,A);
     matrix_complex_free(U);
+    U = NULL;
 
-    for(int i = 0; i < s; i++)
-    {
-        matrix_complex_t *temp;
-        matrix_complex_mult(X,X,1,V);
-        temp = X;
-        X = V;
-        V = temp;
-    }
+    /* square */
+    _expm_square(A, V, s);
 
-    matrix_complex_free(V);
+out:
+    if(A2 != NULL)
+        matrix_complex_free(A2);
+    if(A4 != NULL)
+        matrix_complex_free(A4);
+    if(A6 != NULL)
+        matrix_complex_free(A6);
+    if(U != NULL)
+        matrix_complex_free(U);
+    if(V != NULL)
+        matrix_complex_free(V);
+    if(temp != NULL)
+        matrix_complex_free(temp);
 
-    return X;
+    return ret;
 }
 
-matrix_complex_t *matrix_complex_expm(matrix_complex_t *A)
+int matrix_complex_expm(matrix_complex_t *A)
 {
     double norm;
     
@@ -200,5 +265,3 @@ matrix_complex_t *matrix_complex_expm(matrix_complex_t *A)
     else
         return _expm_ss(A,norm);
 }
-
-/** @}*/
