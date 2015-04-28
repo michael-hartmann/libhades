@@ -10,6 +10,10 @@
         #define M_PI 3.14159265358979323846
     #endif
 
+    #ifndef M_LN2
+        #define M_LN2 0.6931471805599453
+    #endif
+
     #ifndef M_E
         #define M_E 2.718281828459045
     #endif
