@@ -45,7 +45,18 @@ static double const *b_list[] = {
 };
 
 
-/* works only for square matrices and M == 3,5,7 */
+/**
+ * @brief Calculate matrix exponential of A using Pade approximation M
+ *
+ * This implements a part of algorithm 10.20.
+ *
+ * The calculation is performed inplace.
+ *
+ * @param [in,out] A square matrix
+ * @param [in,out] M Pade approximation (must be 3,5,7 or 9)
+ * @return 0 if successful
+ * @return error otherwise
+*/
 static int _expm_pade3579(matrix_complex_t *A, int M)
 {
     matrix_complex_t *U = NULL, *V = NULL, *A2 = NULL, *A2n = NULL, *workspace = NULL;
@@ -65,6 +76,7 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
             matrix_set(V, i,i, b[0]);
         }
 
+        /* A2 = A*A */
         A2 = matrix_complex_mult(A,A,1,NULL);
         return_error(A2 == NULL, LIBHADES_ERROR_OOM);
 
@@ -111,7 +123,7 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
             matrix_set(V, i,j, Vij-Uij);
         }
 
-    /* X = (V-U)^-1 * (V+U) */
+    /* A = (V-U)^-1 * (V+U) */
     ret = matrix_complex_invert(V);
     return_error(ret != 0, ret);
     matrix_complex_mult(V,U,1,A);
@@ -131,6 +143,16 @@ out:
     return ret;
 }
 
+
+/**
+ * @brief Calculate A^(2^N)
+ *
+ * The calculation is performed inplace.
+ *
+ * @param [in,out] A complex square matrix
+ * @param [in,out] work complex square matrix with same dimension as A
+ * @param [in,out] N exponent
+ */
 static void _expm_square(matrix_complex_t *A, matrix_complex_t *work, const int N)
 {
     for(int i = 0; i < N/2; i++)
@@ -139,18 +161,32 @@ static void _expm_square(matrix_complex_t *A, matrix_complex_t *work, const int 
         matrix_complex_mult(work,work,1,A);
     }
 
-    /* N odd */
+    /* if N is odd, we have to do one more matrix multiplication */
     if(N % 2 == 1)
     {
         complex_t *ptr;
         matrix_complex_mult(A,A,1,work);
 
+        /* now the result is in work, so swap the matrices A and work */
         ptr     = work->M;
         work->M = A->M;
         A->M    = ptr;
     }
 }
 
+
+/** @brief Calculate matrix exponential using scaling and square method
+ *
+ * This function implements the scaling and square method using Pade
+ * approximation.
+ *
+ * The calculation is performed inplace.
+ *
+ * @param [in,out] A square matrix
+ * @param [in]     norm 1-norm of A
+ * @return 0 if successful
+ * @return error otherwise
+ */
 static int _expm_ss(matrix_complex_t *A, const double norm)
 {
     matrix_complex_t *A2 = NULL, *A4 = NULL, *A6 = NULL, *U = NULL, *V = NULL, *temp = NULL;
@@ -257,6 +293,18 @@ out:
     return ret;
 }
 
+
+/** @brief Calculate matrix exponential using scaling and square method and Pade approximation
+ *
+ * This function implements the scaling and square method using Pade
+ * approximation.
+ *
+ * The calculation is performed inplace.
+ *
+ * @param [in,out] A square matrix
+ * @return 0 if successful
+ * @return error otherwise
+ */
 int matrix_complex_expm(matrix_complex_t *A)
 {
     double norm;
