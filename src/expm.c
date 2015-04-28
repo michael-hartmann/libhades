@@ -162,11 +162,8 @@ matrix_complex_t *_expm_ss(matrix_complex_t *A, const double norm)
             matrix_set(V, i,j, Vij-Uij);
         }
 
-    printf("\nV-U\n");
-    matrix_complex_fprintf(stdout, V, "%g%+gi", "\t", "\n");
-
     /* X = (V-U)^-1 * (V+U) */
-    printf("inv = %d\n", matrix_complex_invert(V));
+    matrix_complex_invert(V);
 
     X = matrix_complex_mult(V,U,1,NULL);
 
@@ -193,30 +190,15 @@ matrix_complex_t *matrix_complex_expm(matrix_complex_t *A)
     matrix_complex_norm(A, '1', &norm);
 
     if     (norm < THETA_3)
-    {
-        printf("3\n");
         return _expm_pade3579(A, 3);
-    }
     else if(norm < THETA_5)
-    {
-        printf("5\n");
         return _expm_pade3579(A, 5);
-    }
     else if(norm < THETA_7)
-    {
-        printf("7\n");
         return _expm_pade3579(A, 7);
-    }
     else if(norm < THETA_9)
-    {
-        printf("9\n");
         return _expm_pade3579(A, 9);
-    }
     else
-    {
-        printf("ss\n");
         return _expm_ss(A,norm);
-    }
 }
 
 /** @}*/
