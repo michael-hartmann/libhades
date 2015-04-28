@@ -3,8 +3,9 @@
 
     #include <complex.h>
     #include <stdio.h>
+    #include <limits.h>
 
-    #define LIBHADES_ERROR_OOM 254
+    #define LIBHADES_ERROR_OOM INT_MAX
     
     #ifndef M_PI
         #define M_PI 3.14159265358979323846
@@ -81,7 +82,7 @@
         int min;        /**< MIN(rows,columns) */
         int size;       /**< size = rows*columns */
         int type;       /**< type of matrix */
-        int view;    /**< matrix is a view */
+        int view;       /**< matrix is a view */
         complex_t *M;   /**< data in column major order */
     } matrix_complex_t;
 
