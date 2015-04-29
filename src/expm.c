@@ -162,7 +162,7 @@ static void _expm_square(matrix_complex_t *A, matrix_complex_t *work, const int 
     }
 
     /* if N is odd, we have to do one more matrix multiplication */
-    if(N % 2 == 1)
+    if((N % 2) == 1)
     {
         complex_t *ptr;
         matrix_complex_mult(A,A,1,work);
@@ -193,9 +193,10 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
     int ret = 0;
     const int dim = A->rows;
     double const *b = b_list[13];
-    const int s = ceil(log(norm/THETA_13)/M_LN2);
+    const int s = MAX(0,ceil(log(norm/THETA_13)/M_LN2));
 
-    matrix_complex_mult_scalar(A, pow(0.5,s));
+    if(s != 0)
+        matrix_complex_mult_scalar(A, pow(0.5,s));
 
     A2 = matrix_complex_mult(A, A, 1,NULL);
     return_error(A2 == NULL, LIBHADES_ERROR_OOM);
