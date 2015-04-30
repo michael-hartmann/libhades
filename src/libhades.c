@@ -99,6 +99,33 @@ ARGXXX(argabsmax, fabs, >)
  *  @{
  */
 
+#define MATRIX_SWAP(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
+void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
+{ \
+    TYPE *ptr = A->M; \
+    A->M = B->M; \
+    B->M = ptr; \
+}
+
+/** @brief Swap matrices A and B
+ *
+ * This function swaps the matrices A and B. The former content of A will be
+ * the content of B and vice versa. No data is copied or moved, but the
+ * pointers are swapped.
+ *
+ * @param [in,out] A matrix A
+ * @param [in,out] B matrix B
+ */
+MATRIX_SWAP(matrix_swap, matrix_t, double);
+
+/** @brief Swap matrices A and B
+ *
+ * See \ref matrix_swap.
+ *
+ * @param [in,out] A matrix A
+ * @param [in,out] B matrix B
+ */
+MATRIX_SWAP(matrix_complex_swap, matrix_complex_t, complex_t);
 
 /** macro to create a diagnal matrix out of a vector */
 #define MATRIX_DIAG(FUNCTION_NAME, MATRIX_TYPE, ZEROS) \

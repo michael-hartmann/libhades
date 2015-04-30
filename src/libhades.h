@@ -144,6 +144,9 @@
     double    matrix_trace        (matrix_t *A);
     complex_t matrix_complex_trace(matrix_complex_t *A);
 
+    void matrix_swap        (matrix_t *A, matrix_t *B);
+    void matrix_complex_swap(matrix_complex_t *A, matrix_complex_t *B);
+
     matrix_t         *matrix_diag        (matrix_t *v);
     matrix_complex_t *matrix_complex_diag(matrix_complex_t *v);
 
