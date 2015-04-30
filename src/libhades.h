@@ -91,6 +91,7 @@
     int argmin   (double list[], int size);
     int argmax   (double list[], int size);
     int argabsmin(double list[], int size);
+    int argabsmax(double list[], int size);
 
     void matrix_set_alloc(void *(*_malloc_cb)(size_t), void  (*_free_cb)(void *));
 
