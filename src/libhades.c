@@ -1435,6 +1435,12 @@ MATRIX_GET_COLUMN(matrix_get_column,         double,    matrix_t);
 MATRIX_GET_COLUMN(matrix_complex_get_column, complex_t, matrix_complex_t);
 
 
+/** \defgroup sparse Functions for sparse matrices
+ *  @{
+ */
+
+#ifdef SUPPORT_SPARSE
+
 /** @brief Calculate eigenvalues of a sparse complex matrix
  *
  * @param [in] N     number of columns/rows of matrix
@@ -1548,3 +1554,7 @@ out:
 
     return ret;
 }
+
+#endif
+
+/** @}*/
