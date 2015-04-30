@@ -89,13 +89,8 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
         for(int i = 2; i <= M/2; i++)
         {
             /* A2n = A2n*A2 */
-            {
-                complex_t *p;
-                matrix_complex_mult(A2n,A2,1,workspace);
-                p = workspace->M;
-                workspace->M = A2n->M;
-                A2n->M       = p;
-            }
+            matrix_complex_mult(A2n,A2,1,workspace);
+            matrix_complex_swap(A2n,workspace);
 
             matrix_complex_add(U, A2n, b[2*i+1], NULL);
             matrix_complex_add(V, A2n, b[2*i],   NULL);
@@ -164,13 +159,10 @@ static void _expm_square(matrix_complex_t *A, matrix_complex_t *work, const int 
     /* if N is odd, we have to do one more matrix multiplication */
     if((N % 2) == 1)
     {
-        complex_t *ptr;
         matrix_complex_mult(A,A,1,work);
 
         /* now the result is in work, so swap the matrices A and work */
-        ptr     = work->M;
-        work->M = A->M;
-        A->M    = ptr;
+        matrix_complex_swap(work,A);
     }
 }
 
