@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 
 #include <libhades.h>
 
@@ -222,23 +223,72 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
 
+#define MATRIX_LOAD(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, IDENTIFIER) \
+MATRIX_TYPE *FUNCTION_NAME(const char *filename) \
+{ \
+    MATRIX_TYPE *A = NULL; \
+    long int rows, columns; \
+    char *ptr, *endptr; \
+    char line[256] = { 0 }; \
+    FILE *fh = fopen(filename, "r"); \
+    if(fh == NULL) \
+        return NULL; \
+\
+    fgets(line, sizeof(line)/sizeof(line[0]), fh); \
+    if(strcmp(IDENTIFIER, line) != 0) \
+        goto out; \
+\
+    if((ptr = index(line, ' ')) == NULL) \
+        goto out; \
+\
+    rows    = strtol(++ptr,    &endptr, 10); \
+    columns = strtol(++endptr, &endptr, 10); \
+\
+    A = MATRIX_ALLOC(rows, columns); \
+    if(A == NULL) \
+        goto out; \
+\
+    fread(&A->type, sizeof(int),  1,            fh); \
+    fread(A->M,     sizeof(TYPE), rows*columns, fh); \
+\
+out: \
+    if(fh != NULL) \
+        fclose(fh); \
+\
+    return A; \
+}
+
+/** @brief Load real matrix from file
+ *
+ * Load real matrix A from file given by filename. This function will also
+ * allocate memory for the matrix.
+ *
+ * @param [in] filename path to the file
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD(matrix_load, double, matrix_t, matrix_alloc, "matrix_t");
+
+/** @brief Load complex matrix from file
+ *
+ * Load complex matrix A from file given by filename. This function will also
+ * allocate memory for the matrix.
+ *
+ * @param [in] filename path to the file
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD(matrix_complex_load, complex_t, matrix_complex_t, matrix_complex_alloc, "matrix_complex_t");
 
 #define MATRIX_SAVE(FUNCTION_NAME, TYPE, MATRIX_TYPE, IDENTIFIER) \
 int FUNCTION_NAME(const char *filename, MATRIX_TYPE *A) \
 { \
-    int view = 0; \
     FILE *fh = fopen(filename, "w"); \
     if(fh == NULL) \
         return -1; \
 \
     fprintf(fh, "%s %dx%d\n", IDENTIFIER, A->rows, A->columns); \
-    fwrite(&A->rows,    sizeof(int), 1, fh); \
-    fwrite(&A->columns, sizeof(int), 1, fh); \
-    fwrite(&A->min,     sizeof(int), 1, fh); \
-    fwrite(&A->size,    sizeof(int), 1, fh); \
     fwrite(&A->type,    sizeof(int), 1, fh); \
-    fwrite(&view,       sizeof(int), 1, fh); \
-\
     fwrite(A->M,        sizeof(TYPE), A->size, fh); \
 \
     fclose(fh); \
@@ -256,7 +306,7 @@ int FUNCTION_NAME(const char *filename, MATRIX_TYPE *A) \
  * @retval 0 if successful
  * @retval -1 if file could not be opened
  */
-MATRIX_SAVE(matrix_save,         double,    matrix_t, "real");
+MATRIX_SAVE(matrix_save,         double,    matrix_t, "matrix_t");
 
 /** @brief Save complex matrix A to file
  *
@@ -268,7 +318,7 @@ MATRIX_SAVE(matrix_save,         double,    matrix_t, "real");
  * @retval 0 if successful
  * @retval -1 if file could not be opened
  */
-MATRIX_SAVE(matrix_complex_save, complex_t, matrix_complex_t, "complex");
+MATRIX_SAVE(matrix_complex_save, complex_t, matrix_complex_t, "matrix_complex_t");
 
 
 /** @brief Copy a real matrix A to a complex matrix C
