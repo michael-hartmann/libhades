@@ -222,6 +222,55 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
 
+
+#define MATRIX_SAVE(FUNCTION_NAME, TYPE, MATRIX_TYPE, IDENTIFIER) \
+int FUNCTION_NAME(const char *filename, MATRIX_TYPE *A) \
+{ \
+    int view = 0; \
+    FILE *fh = fopen(filename, "w"); \
+    if(fh == NULL) \
+        return -1; \
+\
+    fprintf(fh, "%s %dx%d\n", IDENTIFIER, A->rows, A->columns); \
+    fwrite(&A->rows,    sizeof(int), 1, fh); \
+    fwrite(&A->columns, sizeof(int), 1, fh); \
+    fwrite(&A->min,     sizeof(int), 1, fh); \
+    fwrite(&A->size,    sizeof(int), 1, fh); \
+    fwrite(&A->type,    sizeof(int), 1, fh); \
+    fwrite(&view,       sizeof(int), 1, fh); \
+\
+    fwrite(A->M,        sizeof(TYPE), A->size, fh); \
+\
+    fclose(fh); \
+\
+    return 0; \
+}
+
+/** @brief Save real matrix A to file
+ *
+ * Save real matrix A to a file given by filename. The datatype is binary and
+ * may not be portable across different machines or OSes.
+ *
+ * @param [in] filename path to the file
+ * @param [in] A        matrix to be dumped to file
+ * @retval 0 if successful
+ * @retval -1 if file could not be opened
+ */
+MATRIX_SAVE(matrix_save,         double,    matrix_t, "real");
+
+/** @brief Save complex matrix A to file
+ *
+ * Save complex matrix A to a file given by filename. The datatype is binary and
+ * may not be portable across different machines or OSes.
+ *
+ * @param [in] filename path to the file
+ * @param [in] A        matrix to be dumped to file
+ * @retval 0 if successful
+ * @retval -1 if file could not be opened
+ */
+MATRIX_SAVE(matrix_complex_save, complex_t, matrix_complex_t, "complex");
+
+
 /** @brief Copy a real matrix A to a complex matrix C
  *
  * Copy the matrix A to a complex matrix C. The matrix elements of A and C will
