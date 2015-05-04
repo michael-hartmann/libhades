@@ -20,7 +20,6 @@
     #endif
 
     typedef double complex complex_t;
-    typedef double complex complex_t;
     #define CREAL creal
     #define CIMAG cimag
     #define CABS cabs
