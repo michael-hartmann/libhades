@@ -518,8 +518,8 @@ doublereal snrm2_(integer *n, real *x, integer *incx);
 	doublecomplex *a, integer *lda, doublecomplex *x, integer *incx);
 
 /* Subroutine */ int cbdsqr_(char *uplo, integer *n, integer *ncvt, integer *
-	nru, integer *ncc, real *d__, real *e, complex *vt, integer *ldvt, 
-	complex *u, integer *ldu, complex *c__, integer *ldc, real *rwork, 
+	nru, integer *ncc, real *d__, real *e, doublecomplex *vt, integer *ldvt, 
+	doublecomplex *u, integer *ldu, doublecomplex *c__, integer *ldc, real *rwork, 
 	integer *info);
 
 /* Subroutine */ int cgbbrd_(char *vect, integer *m, integer *n, integer *ncc, 
@@ -3906,7 +3906,7 @@ integer smaxloc_(real *a, integer *dimm);
 	nru, integer *ncc, real *d__, real *e, real *vt, integer *ldvt, real *
 	u, integer *ldu, real *c__, integer *ldc, real *work, integer *info);
 
-doublereal scsum1_(integer *n, complex *cx, integer *incx);
+doublereal scsum1_(integer *n, doublecomplex *cx, integer *incx);
 
 /* Subroutine */ int sdisna_(char *job, integer *m, integer *n, real *d__, 
 	real *sep, integer *info);
