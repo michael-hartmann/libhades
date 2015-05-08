@@ -15,7 +15,7 @@
 
 #include <libhades.h>
 
-static void *xmalloc(size_t size)
+void *xmalloc(size_t size)
 {
     int err;
     void *ptr = malloc(size);
@@ -28,7 +28,7 @@ static void *xmalloc(size_t size)
     return ptr;
 }
 
-static void xfree(void *ptr)
+void xfree(void *ptr)
 {
     if(ptr == NULL)
     {
