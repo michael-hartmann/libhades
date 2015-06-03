@@ -104,8 +104,12 @@ ARGXXX(argabsmax, fabs, >)
 void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
 { \
     TYPE *ptr = A->M; \
+    int rows_A; \
     A->M = B->M; \
     B->M = ptr; \
+    rows_A = A->rows; \
+    A->rows = B->columns; \
+    B->columns = rows_A; \
 }
 
 /** @brief Swap matrices A and B
