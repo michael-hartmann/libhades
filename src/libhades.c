@@ -103,13 +103,18 @@ ARGXXX(argabsmax, fabs, >)
 #define MATRIX_SWAP(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
 void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
 { \
+    int temp; \
     TYPE *ptr = A->M; \
-    int rows_A; \
     A->M = B->M; \
     B->M = ptr; \
-    rows_A = A->rows; \
-    A->rows = B->columns; \
-    B->columns = rows_A; \
+    \
+    temp = A->rows; \
+    A->rows = B->rows; \
+    B->rows = temp; \
+    \
+    temp = A->columns; \
+    A->columns = B->columns; \
+    B->columns = temp; \
 }
 
 /** @brief Swap matrices A and B
