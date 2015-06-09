@@ -18,7 +18,7 @@ tests:
 	${CC} -std=c99 -Wall -O3 ${TESTS}/tests.c -I ${SRC} -L . -I /:/home/physik/theo1/hartmmic/libs -L /:/home/physik/theo1/hartmmic/libs -lm -lhades -lunittest -llapacke -llapack -lblas -lgfortran -o libhades_tests
 
 clean:
-	rm -rf libhades.so libhades.o
+	rm -rf *.so *.o
 
 doc:
 	doxygen Doxyfile
