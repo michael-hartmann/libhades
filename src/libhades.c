@@ -209,7 +209,7 @@ MTYPE *FUNCTION_NAME(MTYPE *A, MTYPE *C) \
 
 /** @brief Copy real matrix A
  *
- * Copy matrix A into C. If C is null, space for the matrix C will be
+ * Copy matrix A into C. If C is NULL, space for the matrix C will be
  * allocated.
  *
  * @param [in]     A real matrix
@@ -222,7 +222,7 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
 
 /** @brief Copy complex matrix A
  *
- * Copy matrix A into C. If C is null, space for the matrix C will be
+ * Copy matrix A into C. If C is NULL, space for the matrix C will be
  * allocated.
  *
  * @param [in]     A complex matrix
@@ -239,7 +239,7 @@ MATRIX_TYPE *FUNCTION_NAME(const char *filename, int *ret) \
     int type; \
     MATRIX_TYPE *A = NULL; \
     int rows, columns; \
-    char line[1024] = { 0 }; \
+    char line[4096] = { 0 }; \
     FILE *fh = fopen(filename, "r"); \
     if(fh == NULL) \
     { \
