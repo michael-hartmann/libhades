@@ -1,7 +1,7 @@
 /**
  * @file   libhades.c
  * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
- * @date   March, 2015
+ * @date   June, 2015
  * @brief  library to access low-level LAPACK functions
  */
 
