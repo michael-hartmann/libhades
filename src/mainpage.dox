@@ -1,0 +1,51 @@
+/**
+@mainpage libhades
+
+\section whatis What is libhades?
+
+libhades is a powerful numerical library that wraps lot of functions
+of libraries like LAPACK, BLAS or ARPACK.
+
+\subsection features Features
+
+ - basic operations on matrices like addition, multiplication...
+ - calculating trace and determinant
+ - LU decomposition and inverting of matrices
+ - Kronecker product
+ - eigenvalue problems
+ - matrix exponential using Pade approximation
+ - Functions for sparse matrices
+ - Integration of ordinary differential equations
+ - symplectic integrator
+
+\subsection installation Installation
+
+If you use Linux or Unix, you need the gcc and development libraries and header
+files for the standard C library. On a Debian-like Linux the commands
+
+    $ sudo apt-get install gcc libc6-dev make
+    $ make
+
+should install all dependencies and compile the code.
+
+
+\section authors Authors and License
+
+libhades is developed by Michael Hartmann. It is free software and licensed
+under GPLv2. This means that you may study, modify and distribute the original
+software and the adapted versions.
+
+\section links Links
+
+ - <a href="http://www.netlib.org/lapack/">LAPACK</a>
+ - <a href="http://www.caam.rice.edu/software/ARPACK/">ARPACK</a>
+ - <a href="http://forge.scilab.org/index.php/p/arpack-ng/">ARPACK-NG</a>
+ - <a href="http://www.netlib.org/blas/">BLAS</a>
+
+\section bibliography Bibliography
+
+ -# Moler, Loan, "Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later", SIAM Review, 2005
+ -# Awad H. Al-Mohy and Nicholas J. Higham (2009) "A New Scaling and Squaring Algorithm for the Matrix Exponential." SIAM Journal on Matrix Analysis and Applications. 31 (3). pp. 970-989. ISSN 1095-7162
+ -# Higham, "Functions of Matrices: Theory and Computation", Society for Industrial and Applied Mathematics, 2008
+ -# Markiewicz, "Survey On Symplectic Integrators"
+*/
