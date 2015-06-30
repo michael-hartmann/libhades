@@ -15,36 +15,78 @@
 
 #include <libhades.h>
 
+/** \defgroup misc miscellaneous functions
+ *  @{
+ */
+
+/** @brief malloc wrapper
+ *
+ * This function uses malloc to allocate size bytes of memory and returns a
+ * pointer to the memory. If an error occures, an error message is printed to
+ * stderr and the program is aborted.
+ *
+ * @param [in] size amount of memory to allocate
+ * @retval ptr pointer to the allocated memory
+ */
 void *xmalloc(size_t size)
 {
-    int err;
     void *ptr = malloc(size);
     if(ptr == NULL)
     {   
-        err = errno;
-        fprintf(stderr, "Can't allocate %zu bytes of memory: %s (%d)\n", size, strerror(err), errno);
-        exit(1);
+        int err = errno;
+        fprintf(stderr, "malloc can't allocate %zu bytes of memory: %s (%d)\n", size, strerror(err), err);
+        abort();
     }   
     return ptr;
 }
 
+/** @brief free wrapper
+ *
+ * This function frees the memory allocated by \ref xmalloc or \ref xrealloc
+ * (or malloc and realloc). If the pointer given is NULL, an error is printed
+ * to stderr and the program is aborted.
+ *
+ * @param [in] ptr pointer to the memory that should be freed
+ */
 void xfree(void *ptr)
 {
     if(ptr == NULL)
     {
         fprintf(stderr, "Trying to free NULL pointer\n");
-        exit(1);
+        abort();
     }
 
     free(ptr);
 }
 
-static void *(*malloc_cb)(size_t) = &xmalloc;
-static void  (*free_cb)(void *)   = &xfree;
-
-/** \defgroup misc miscellaneous functions
- *  @{
+/** @brief realloc wrapper
+ *
+ * This function changes the size of the memory block pointed to by ptr to size
+ * bytes. If ptr is NULL, this function behaves like \ref xmalloc. If an error
+ * occures, an error is printed to stderr and the program is aboprted.
+ *
+ * @param [in] ptr pointer to the memory block
+ * @param [in] size size of the memory block
+ * @retval ptr_new pointer to the new memory block
  */
+void *xrealloc(void *ptr, size_t size)
+{
+    void *ptr_new = realloc(ptr, size);
+
+    if(ptr_new == NULL)
+    {
+        int err = errno;
+        fprintf(stderr, "realloc can't allocate %zu bytes of memory: %s (%d)\n", size, strerror(err), err);
+        abort();
+    }
+
+    return ptr_new;
+}
+
+static void *(*malloc_cb)(size_t)          = &xmalloc;
+//static void *(*realloc_cb)(void *, size_t) = &xrealloc;
+static void  (*free_cb)(void *)            = &xfree;
+
 
 /** macro to create functions argmin, argmax, argabsmin, argabsmax */
 #define ARGXXX(FUNCTION_NAME, FUNCTION, RELATION) \

@@ -85,10 +85,12 @@
         complex_t *M;   /**< data in column major order */
     } matrix_complex_t;
 
-    void *xmalloc(size_t size);
-    void xfree(void *ptr);
 
     /* prototypes */
+    void *xmalloc(size_t size);
+    void *xrealloc(void *ptr, size_t size);
+    void xfree(void *ptr);
+
     int argmin   (double list[], int size);
     int argmax   (double list[], int size);
     int argabsmin(double list[], int size);
