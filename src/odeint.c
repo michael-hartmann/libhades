@@ -88,7 +88,16 @@ void FUNCTION_NAME(RK4_TYPE *self) \
             MATRIX_FREE(self->workspace[i]); \
 }
 
+/** @brief Free memory allocated by rk4_init
+ *
+ * @param self rk4_t object
+ **/
 RK4_FREE(rk4_free, rk4_t, matrix_free)
+
+/** @brief Free memory allocated by rk4_complex_init
+ *
+ * @param self rk4_t object
+ **/
 RK4_FREE(rk4_complex_free, rk4_complex_t, matrix_complex_free)
 
 
@@ -281,7 +290,7 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
     const double epsilon = self->epsilon;
     const double maxiter = self->maxiter;
     double tn = t0;
-    double h;
+    double h = (t-t0)/steps;
     int bye = 0;
 
     matrix_t *Z1      = self->workspace[0];
@@ -289,26 +298,24 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
     matrix_t *Z2      = self->workspace[2];
     matrix_t *Z2_last = self->workspace[3];
 
-    matrix_t *ynpZ1 = self->workspace[4];
-    matrix_t *ynpZ2 = self->workspace[5];
+    matrix_t *ynpZ1   = self->workspace[4];
+    matrix_t *ynpZ2   = self->workspace[5];
 
-    matrix_t *Y1 = self->workspace[6];
-    matrix_t *Y2 = self->workspace[7];
+    matrix_t *Y1      = self->workspace[6];
+    matrix_t *Y2      = self->workspace[7];
 
     /* init */
     matrix_setall(Z1, 0);
     matrix_setall(Z2, 0);
 
-    if(self->adapt == NULL)
-        h = (t-t0)/steps;
-    else
+    if(self->adapt != NULL)
         h = self->adapt(self->f, yn, t, self->args);
 
-   if((t-tn) < h)
-   {
-       h = t-tn;
-       bye = 1;
-   }
+    if((t-tn) < h)
+    {
+        h = t-tn;
+        bye = 1;
+    }
 
     while(1)
     {
@@ -351,7 +358,7 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
             }
             if(j >= maxiter)
             {
-                fprintf(stderr, "Convergence error, steps=%d\n", steps);
+                fprintf(stderr, "Convergence error, h=%g\n", h);
                 return j;
             }
         }
@@ -370,9 +377,7 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
 
         tn += h;
 
-        if(self->adapt == NULL)
-            h = (t-t0)/steps;
-        else
+        if(self->adapt != NULL)
             h = self->adapt(self->f, yn, t, self->args);
 
         if((t-tn) < h)
