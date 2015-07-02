@@ -291,7 +291,6 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
     const double maxiter = self->maxiter;
     double tn = t0;
     double h = (t-t0)/steps;
-    int bye = 0;
 
     matrix_t *Z1      = self->workspace[0];
     matrix_t *Z1_last = self->workspace[1];
@@ -308,26 +307,41 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
     matrix_setall(Z1, 0);
     matrix_setall(Z2, 0);
 
-    if(self->adapt != NULL)
-        h = self->adapt(self->f, yn, t, self->args);
-
-    if((t-tn) < h)
+    while(t != tn)
     {
-        h = t-tn;
-        bye = 1;
-    }
+        /* determine step size */
+        if(self->adapt != NULL)
+            h = self->adapt(self->f, yn, t, self->args);
 
-    while(1)
-    {
+        if((t-tn) < h)
+            h = t-tn;
+
+        /* determine starting approximations */
+        {
+            const double t[] = { tn, tn+h*c1, tn+h*c2 };
+            double f[3];
+            f[0] = 0;
+
+            for(int k = 0; k < dim; k++)
+            {
+                double w1,w2;
+                f[1] = matrix_get(Z1, k,0);
+                f[2] = matrix_get(Z2, k,0);
+
+                interpolate(tn+c1*h, tn+c2*h, t, f, &w1, &w2);
+
+                matrix_set(Z1, k,0, w1);
+                matrix_set(Z2, k,0, w2);
+            }
+        }
+
         /* fixed point iteration */
         for(int j = 0; ; j++)
         {
             double norm_Z1, norm_Z2;
 
-            Z1_last = self->workspace[j     % 2];
-            Z1      = self->workspace[(j+1) % 2];
-            Z2_last = self->workspace[j     % 2 + 2];
-            Z2      = self->workspace[(j+1) % 2 + 2];
+            matrix_swap(Z1, Z1_last);
+            matrix_swap(Z2, Z2_last);
 
             /* ynpZ1 = yn+Z1, ynpZ2 = yn+Z2 */
             matrix_add(yn, Z1_last, 1, ynpZ1);
@@ -372,39 +386,10 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
         matrix_add(yn, Y1, h*b1, NULL);
         matrix_add(yn, Y2, h*b2, NULL);
 
-        if(bye)
-            return 0;
-
         tn += h;
-
-        if(self->adapt != NULL)
-            h = self->adapt(self->f, yn, t, self->args);
-
-        if((t-tn) < h)
-        {
-            h = t-tn;
-            bye = 1;
-        }
-
-        /* determine starting approximations */
-        {
-            const double t[] = { tn, tn+h*c1, tn+h*c2 };
-            double f[3];
-            f[0] = 0;
-
-            for(int k = 0; k < dim; k++)
-            {
-                double w1,w2;
-                f[1] = matrix_get(Z1, k,0);
-                f[2] = matrix_get(Z2, k,0);
-
-                interpolate(tn+c1*h, tn+c2*h, t, f, &w1, &w2);
-
-                matrix_set(Z1, k,0, w1);
-                matrix_set(Z2, k,0, w2);
-            }
-        }
     }
+
+    return 0;
 }
 
 /** @}*/
