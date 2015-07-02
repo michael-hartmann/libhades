@@ -276,7 +276,30 @@ static inline void interpolate(const double t1, const double t2, const double x[
 
 /** @brief Integrate differential equation
  *
- * 
+ * Solve the differential equation
+ * \f[
+ *   \frac{\mathrm{d}}{\mathrm{d}t} y(t) = f(t,y)
+ * \f]
+ * using the Gauss-Legendre method of order 4 with Butcher tableu:
+ * \f[
+ * \begin{array}{c|cc}
+ * \frac{1}{2} - \frac{1}{6} \sqrt{3}  & \frac{1}{4}                        & \frac{1}{4} - \frac{1}{6} \sqrt{3} \\
+ * \frac{1}{2} + \frac{1}{6} \sqrt{3}  & \frac{1}{4} + \frac{1}{6} \sqrt{3} & \frac{1}{4} \\
+ * \hline \\
+ *     & \frac{1}{2} & \frac{1}{2}
+ * \end{array}.
+ * \f]
+ * Gauss-Legendre methods are symplectic, and implicit Runge-Kutta methods.
+ *
+ * Integration:
+ * \f[
+ * y_{n+1} = y_n + h\sum_{j=1}^{s=2} b_j f(t_n+c_j h, y_n + Z_{jn})
+ * \f]
+ * where \f$Z_{1n}, Z_{2n}\f$ are given implicit by:
+ * \f[
+ *   Z_{in} - h\sum_{j=1}^{s=2} a_{ij} f(t_n+c_i h, y_n+Z_{jn}) = 0.
+ * \f]
+ *
  * @param self  [in,out] symplectic Runge Kutta object
  * @param yn    [in,out] at start initial conditions yn=y(t0), at the end yn=y(t)
  * @param t     [in]     end time
