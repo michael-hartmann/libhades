@@ -304,7 +304,7 @@ static inline void interpolate(const double t1, const double t2, const double x[
  * @param yn    [in,out] at start initial conditions yn=y(t0), at the end yn=y(t)
  * @param t     [in]     end time
  * @param t0    [in]     initial time
- * @param steps [in]     number of steps used
+ * @param steps [in]     number of steps used. If an adaptive step size is used, this parameter will be ignored.
  * @return success 0 if successful, LIBHADES_ERROR_OOM if out of memory, >0 if convergence failed
  */
 int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, double t0, int steps)
