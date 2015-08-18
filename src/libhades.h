@@ -5,7 +5,15 @@
     #include <stdio.h>
     #include <limits.h>
 
-    #define LIBHADES_ERROR_OOM INT_MAX
+    #define LIBHADES_OK                 0
+    #define LIBHADES_ERROR_OOM          INT_MAX
+    #define LIBHADES_ERROR_IO           -100
+    #define LIBHADES_ERROR_HEADER       -101
+    #define LIBHADES_ERROR_INV_LENGTH   -102
+    #define LIBHADES_ERROR_ORDER        -103
+    #define LIBHADES_ERROR_SHAPE        -104
+    #define LIBHADES_ERROR_DESCR        -105
+    #define LIBHADES_ERROR_FORMAT       -106
     
     #ifndef M_PI
         #define M_PI 3.14159265358979323846
@@ -126,6 +134,10 @@
     int matrix_add             (matrix_t         *A, matrix_t         *B, double    alpha, matrix_t         *C);
     int matrix_complex_add     (matrix_complex_t *A, matrix_complex_t *B, complex_t alpha, matrix_complex_t *C);
     int matrix_complex_add_real(matrix_complex_t *A, matrix_t         *B, complex_t alpha, matrix_complex_t *C);
+
+    /* load */
+    matrix_t         *matrix_load_from_stream        (FILE *stream, int *ret);
+    matrix_complex_t *matrix_complex_load_from_stream(FILE *stream, int *ret);
 
     matrix_t         *matrix_load        (const char *filename, int *error);
     matrix_complex_t *matrix_complex_load(const char *filename, int *error);

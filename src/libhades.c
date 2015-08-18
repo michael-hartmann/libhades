@@ -15,6 +15,7 @@
 #include <strings.h>
 
 #include <libhades.h>
+#include <libhades/parse_npy_dict.h>
 
 /** \defgroup misc miscellaneous functions
  *  @{
@@ -274,8 +275,6 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
  * @retval C copy of A
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
-
-/** @}*/
 
 
 /** @brief Copy a real matrix A to a complex matrix C
@@ -885,7 +884,7 @@ int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
         M3 = C->M; \
 \
     if(A->rows != B->rows || A->columns != B->columns) \
-        return 1; \
+        return LIBHADES_ERROR_SHAPE; \
 \
     for(int i = 0; i < max; i++) \
         M3[i] = M1[i] + (alpha*M2[i]); \
@@ -903,6 +902,9 @@ int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
  * @param [in] B real matrix
  * @param [in] alpha real scalar
  * @param [in,out] C real matrix or NULL
+ *
+ * @retval 0 if successfull
+ * @retval LIBHADES_ERROR_SHAPE if matrices have wrong shape
  */
 MATRIX_ADD(matrix_add, double, matrix_t, double, matrix_t)
 
@@ -916,6 +918,9 @@ MATRIX_ADD(matrix_add, double, matrix_t, double, matrix_t)
  * @param [in] B complex matrix
  * @param [in] alpha complex number
  * @param [in,out] C complex matrix or NULL
+ *
+ * @retval 0 if successfull
+ * @retval LIBHADES_ERROR_SHAPE if matrices have wrong shape
  */
 MATRIX_ADD(matrix_complex_add, complex_t, matrix_complex_t, complex_t, matrix_complex_t)
 
@@ -929,6 +934,9 @@ MATRIX_ADD(matrix_complex_add, complex_t, matrix_complex_t, complex_t, matrix_co
  * @param [in] B real matrix
  * @param [in] alpha complex scalar
  * @param [in,out] C complex matrix or NULL
+ *
+ * @retval 0 if successfull
+ * @retval LIBHADES_ERROR_SHAPE if matrices have wrong shape
  */
 MATRIX_ADD(matrix_complex_add_real, complex_t, matrix_complex_t, double, matrix_t)
 
@@ -1618,109 +1626,170 @@ out:
  *  @{
  */
 
+#define MATRIX_LOAD_FROM_STREAM(FUNCTION_NAME, MATRIX_TYPE, TYPE, ALLOC, TRANSPOSE, IS_COMPLEX) \
+MATRIX_TYPE *FUNCTION_NAME(FILE *stream, int *ret) \
+{ \
+    MATRIX_TYPE *M; \
+    uint16_t len; \
+    int rows, columns, fortran_order, is_complex; \
+    char header[10] = { 0 }; \
+    char dict[2048] = { 0 }; \
+\
+    if(ret != NULL) \
+        *ret = 0; \
+\
+    /* read magic string, major and minor number */ \
+    fread(header, 8, 1, stream); \
+    if(memcmp(header, "\x93NUMPY\x01\x00", 8) != 0) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_HEADER; \
+        return NULL; \
+    } \
+\
+    /* read length of dict */ \
+    fread(&len, sizeof(uint16_t), 1, stream); \
+\
+    if(len >= sizeof(dict)/sizeof(dict[0])) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_INV_LENGTH; \
+        return NULL; \
+    } \
+\
+    fread(dict, sizeof(char), len, stream); \
+\
+    if(npy_dict_get_fortran_order(dict, &fortran_order) != 0) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_ORDER; \
+        return NULL; \
+    } \
+\
+    if(npy_dict_get_shape(dict, &rows, &columns) != 0) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_SHAPE; \
+        return NULL; \
+    } \
+\
+    if(npy_dict_get_descr(dict, &is_complex) != 0) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_DESCR; \
+        return NULL; \
+    } \
+\
+    if(is_complex != IS_COMPLEX) \
+    { \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_FORMAT; \
+        return NULL; \
+    } \
+\
+    M = ALLOC(rows,columns); \
+    fread(M->M, sizeof(TYPE), rows*columns, stream); \
+\
+    if(!fortran_order) \
+        TRANSPOSE(M); \
+\
+    M->min  = MIN(rows,columns); \
+    M->size = rows*columns; \
+    M->view = 0; \
+    M->type = 0; \
+\
+    return M; \
+}
 
-#define MATRIX_LOAD(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, IDENTIFIER) \
+/** @brief Load real matrix from stream
+ *
+ * Load real matrix A from a stream. This function will also allocate memory
+ * for the matrix.
+ *
+ * If error != NULL, error will be set to:
+ *  0                         if successful
+ *  LIBHADES_ERROR_HEADER     if magic or major/minor number is invalid
+ *  LIBHADES_ERROR_INV_LENGTH if length of dictionary is invalid (too long)
+ *  LIBHADES_ERROR_ORDER      if order is invalid (Fortran/C order)
+ *  LIBHADES_ERROR_SHAPE      if shape is invalid (rows/columns)
+ *  LIBHADES_ERROR_DESCR      if dtype is wrong/not supported
+ *  LIBHADES_ERROR_FORMAT     if wrong format (real instead of complex)
+ *  0 rows/columns wrong
+ *
+ * @param [in] stream file handle of a opened file
+ * @param [out] error error code
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD_FROM_STREAM(matrix_load_from_stream, matrix_t, double, matrix_alloc, matrix_transpose, 0);
+
+/** @brief Load complex matrix from stream
+ *
+ * Load complex matrix A from a stream. This function will also allocate memory
+ * for the matrix.
+ *
+ * If error != NULL, error will be set to:
+ *  0                         if successful
+ *  LIBHADES_ERROR_HEADER     if magic or major/minor number is invalid
+ *  LIBHADES_ERROR_INV_LENGTH if length of dictionary is invalid (too long)
+ *  LIBHADES_ERROR_ORDER      if order is invalid (Fortran/C order)
+ *  LIBHADES_ERROR_SHAPE      if shape is invalid (rows/columns)
+ *  LIBHADES_ERROR_DESCR      if dtype is wrong/not supported
+ *  LIBHADES_ERROR_FORMAT     if wrong format (complex instead of real)
+ *  0 rows/columns wrong
+ *
+ * @param [in] stream file handle of a opened file
+ * @param [out] error error code
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD_FROM_STREAM(matrix_complex_load_from_stream, matrix_complex_t, complex_t, matrix_complex_alloc, matrix_complex_transpose, 1);
+
+
+#define MATRIX_LOAD(FUNCTION_NAME, MATRIX_TYPE, LOAD_FUNCTION) \
 MATRIX_TYPE *FUNCTION_NAME(const char *filename, int *ret) \
 { \
-    int error = 0; \
-    int type; \
-    MATRIX_TYPE *A = NULL; \
-    int rows, columns; \
-    char line[4096] = { 0 }; \
-    FILE *fh = fopen(filename, "r"); \
-    if(fh == NULL) \
+    FILE *stream; \
+    MATRIX_TYPE *M; \
+\
+    if((stream = fopen(filename, "r")) == NULL) \
     { \
-        error = -1; \
-        goto out; \
+        if(ret != NULL) \
+            *ret = LIBHADES_ERROR_IO; \
+        return NULL; \
     } \
 \
-    fgets(line, sizeof(line)/sizeof(line[0]), fh); \
+    M = LOAD_FUNCTION(stream, ret); \
 \
-    fread(&type, sizeof(int), 1, fh); \
-    if(type != IDENTIFIER) \
-    { \
-        error = -2; \
-        goto out; \
-    } \
+    fclose(stream); \
 \
-    fread(&rows,    sizeof(int), 1, fh); \
-    fread(&columns, sizeof(int), 1, fh); \
-    if(rows < 0 || columns < 0) \
-    { \
-        error = -3; \
-        goto out; \
-    } \
-\
-    A = MATRIX_ALLOC(rows, columns); \
-    if(A == NULL) \
-    { \
-        error = LIBHADES_ERROR_OOM; \
-        goto out; \
-    } \
-\
-    fread(&A->type, sizeof(int), 1, fh); \
-    fread(A->M,     sizeof(TYPE), A->size, fh); \
-\
-out: \
-    if(fh != NULL) \
-        fclose(fh); \
-    if(ret != NULL) \
-        *ret = error; \
-\
-    return A; \
+    return M; \
 }
 
 /** @brief Load real matrix from file
  *
  * Load real matrix A from file given by filename. This function will also
- * allocate memory for the matrix.
- *
- * error will be:
- *  - 0  if successful
- *  - -1 if file couldn't opened
- *  - -2 wrong identifier (e.g. complex matrix instead of real)
- *  - -3 rows/columns wrong
+ * allocate memory for the matrix. See \ref matrix_load_from_stream for errors.
  *
  * @param [in] filename path to the file
  * @param [out] error error code
  * @retval A matrix
  * @retval NULL if an error occured
  */
-MATRIX_LOAD(matrix_load, double, matrix_t, matrix_alloc, 'd');
+MATRIX_LOAD(matrix_load, matrix_t, matrix_load_from_stream);
 
 /** @brief Load complex matrix from file
  *
  * Load complex matrix A from file given by filename. This function will also
- * allocate memory for the matrix. See \ref matrix_load.
+ * allocate memory for the matrix. See \ref matrix_complex_load_from_stream for
+ * errors.
  *
  * @param [in] filename path to the file
  * @param [out] error error code
  * @retval A matrix
  * @retval NULL if an error occured
  */
-MATRIX_LOAD(matrix_complex_load, complex_t, matrix_complex_t, matrix_complex_alloc, 'c');
-
-/*
-#define MATRIX_SAVE(FUNCTION_NAME, TYPE, MATRIX_TYPE, IDENTIFIER, READABLE) \
-int FUNCTION_NAME(MATRIX_TYPE *A, const char *filename) \
-{ \
-    int identifier = IDENTIFIER; \
-    FILE *fh = fopen(filename, "w"); \
-    if(fh == NULL) \
-        return -1; \
-\
-    fprintf(fh, "# %s %dx%d\n", READABLE, A->rows, A->columns); \
-    fwrite(&identifier, sizeof(int), 1, fh); \
-    fwrite(&A->rows,    sizeof(int), 1, fh); \
-    fwrite(&A->columns, sizeof(int), 1, fh); \
-    fwrite(&A->type,    sizeof(int), 1, fh); \
-    fwrite(A->M,        sizeof(TYPE), A->size, fh); \
-\
-    fclose(fh); \
-\
-    return 0; \
-}
-*/
+MATRIX_LOAD(matrix_complex_load, matrix_complex_t, matrix_complex_load_from_stream);
 
 #define MATRIX_SAVE_TO_STREAM(FUNCTION_NAME, TYPE, MATRIX_TYPE, DTYPE) \
 void FUNCTION_NAME(MATRIX_TYPE *M, FILE *stream) \
@@ -1744,12 +1813,33 @@ void FUNCTION_NAME(MATRIX_TYPE *M, FILE *stream) \
     fwrite(M->M, sizeof(TYPE), M->size, stream); \
 }
 
+/** @brief Save real matrix A to stream
+ *
+ * Save real matrix A to a file handle given by stream. The datatype
+ * corresponds to Numpy's npy file format.
+ *
+ * @param [in] A      matrix to be dumped to file
+ * @param [in] stream file handle of opened file
+ */
+MATRIX_SAVE_TO_STREAM(matrix_save_to_stream, double, matrix_t, "<d8");
+
+/** @brief Save complex matrix A to stream
+ *
+ * Save complex matrix A to a file handle given by stream. The datatype
+ * corresponds to Numpy's npy file format.
+ *
+ * @param [in] A      matrix to be dumped to file
+ * @param [in] stream file handle of opened file
+ */
+MATRIX_SAVE_TO_STREAM(matrix_complex_save_to_stream, complex_t, matrix_complex_t, "<c16");
+
+
 #define MATRIX_SAVE(FUNCTION_NAME, MATRIX_TYPE, SAVE_FUNCTION) \
 int FUNCTION_NAME(MATRIX_TYPE *M, const char *filename) \
 { \
     FILE *stream = fopen(filename, "w"); \
     if(stream == NULL) \
-        return -1; \
+        return LIBHADES_ERROR_IO; \
 \
     SAVE_FUNCTION(M, stream); \
 \
@@ -1758,31 +1848,27 @@ int FUNCTION_NAME(MATRIX_TYPE *M, const char *filename) \
     return 0; \
 };
 
-MATRIX_SAVE_TO_STREAM(matrix_complex_save_to_stream, complex_t, matrix_complex_t, "<c16");
-MATRIX_SAVE_TO_STREAM(matrix_save_to_stream,         double,    matrix_t,         "<d8");
-
-
 /** @brief Save real matrix A to file
  *
- * Save real matrix A to a file given by filename. The datatype is binary and
- * may not be portable across different machines or OSes.
+ * Save real matrix A to file given by filename. The datatype corresponds to
+ * Numpy's .npy file format.
  *
  * @param [in] A        matrix to be dumped to file
  * @param [in] filename path to the file
  * @retval 0 if successful
- * @retval -1 if file could not be opened
+ * @retval LIBHADES_ERROR_IO if file could not be opened
  */
 MATRIX_SAVE(matrix_save, matrix_t, matrix_save_to_stream);
 
 /** @brief Save complex matrix A to file
  *
- * Save complex matrix A to a file given by filename. The datatype is binary and
- * may not be portable across different machines or OSes.
+ * Save complex matrix A to file given by filename. The datatype corresponds to
+ * Numpy's .npy file format.
  *
  * @param [in] A        matrix to be dumped to file
  * @param [in] filename path to the file
  * @retval 0 if successful
- * @retval -1 if file could not be opened
+ * @retval LIBHADES_ERROR_IO if file could not be opened
  */
 MATRIX_SAVE(matrix_complex_save, matrix_complex_t, matrix_complex_save_to_stream);
 
