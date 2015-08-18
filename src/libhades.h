@@ -130,6 +130,10 @@
     matrix_t         *matrix_load        (const char *filename, int *error);
     matrix_complex_t *matrix_complex_load(const char *filename, int *error);
 
+    /* save */
+    void matrix_save_to_stream        (matrix_t         *A, FILE *stream);
+    void matrix_complex_save_to_stream(matrix_complex_t *A, FILE *stream);
+
     int matrix_save        (matrix_t         *A, const char *filename);
     int matrix_complex_save(matrix_complex_t *A, const char *filename);
 

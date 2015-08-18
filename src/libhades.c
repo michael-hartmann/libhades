@@ -1,7 +1,7 @@
 /**
  * @file   libhades.c
  * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
- * @date   June, 2015
+ * @date   August, 2015
  * @brief  library to access low-level LAPACK functions
  */
 
@@ -10,6 +10,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <strings.h>
 
@@ -274,130 +275,7 @@ MATRIX_COPY(matrix_copy, matrix_t, double, matrix_alloc)
  */
 MATRIX_COPY(matrix_complex_copy, matrix_complex_t, complex_t, matrix_complex_alloc)
 
-#define MATRIX_LOAD(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, IDENTIFIER) \
-MATRIX_TYPE *FUNCTION_NAME(const char *filename, int *ret) \
-{ \
-    int error = 0; \
-    int type; \
-    MATRIX_TYPE *A = NULL; \
-    int rows, columns; \
-    char line[4096] = { 0 }; \
-    FILE *fh = fopen(filename, "r"); \
-    if(fh == NULL) \
-    { \
-        error = -1; \
-        goto out; \
-    } \
-\
-    fgets(line, sizeof(line)/sizeof(line[0]), fh); \
-\
-    fread(&type, sizeof(int), 1, fh); \
-    if(type != IDENTIFIER) \
-    { \
-        error = -2; \
-        goto out; \
-    } \
-\
-    fread(&rows,    sizeof(int), 1, fh); \
-    fread(&columns, sizeof(int), 1, fh); \
-    if(rows < 0 || columns < 0) \
-    { \
-        error = -3; \
-        goto out; \
-    } \
-\
-    A = MATRIX_ALLOC(rows, columns); \
-    if(A == NULL) \
-    { \
-        error = LIBHADES_ERROR_OOM; \
-        goto out; \
-    } \
-\
-    fread(&A->type, sizeof(int), 1, fh); \
-    fread(A->M,     sizeof(TYPE), A->size, fh); \
-\
-out: \
-    if(fh != NULL) \
-        fclose(fh); \
-    if(ret != NULL) \
-        *ret = error; \
-\
-    return A; \
-}
-
-/** @brief Load real matrix from file
- *
- * Load real matrix A from file given by filename. This function will also
- * allocate memory for the matrix.
- *
- * error will be:
- *  - 0  if successful
- *  - -1 if file couldn't opened
- *  - -2 wrong identifier (e.g. complex matrix instead of real)
- *  - -3 rows/columns wrong
- *
- * @param [in] filename path to the file
- * @param [out] error error code
- * @retval A matrix
- * @retval NULL if an error occured
- */
-MATRIX_LOAD(matrix_load, double, matrix_t, matrix_alloc, 'd');
-
-/** @brief Load complex matrix from file
- *
- * Load complex matrix A from file given by filename. This function will also
- * allocate memory for the matrix. See \ref matrix_load.
- *
- * @param [in] filename path to the file
- * @param [out] error error code
- * @retval A matrix
- * @retval NULL if an error occured
- */
-MATRIX_LOAD(matrix_complex_load, complex_t, matrix_complex_t, matrix_complex_alloc, 'c');
-
-#define MATRIX_SAVE(FUNCTION_NAME, TYPE, MATRIX_TYPE, IDENTIFIER, READABLE) \
-int FUNCTION_NAME(MATRIX_TYPE *A, const char *filename) \
-{ \
-    int identifier = IDENTIFIER; \
-    FILE *fh = fopen(filename, "w"); \
-    if(fh == NULL) \
-        return -1; \
-\
-    fprintf(fh, "# %s %dx%d\n", READABLE, A->rows, A->columns); \
-    fwrite(&identifier, sizeof(int), 1, fh); \
-    fwrite(&A->rows,    sizeof(int), 1, fh); \
-    fwrite(&A->columns, sizeof(int), 1, fh); \
-    fwrite(&A->type,    sizeof(int), 1, fh); \
-    fwrite(A->M,        sizeof(TYPE), A->size, fh); \
-\
-    fclose(fh); \
-\
-    return 0; \
-}
-
-/** @brief Save real matrix A to file
- *
- * Save real matrix A to a file given by filename. The datatype is binary and
- * may not be portable across different machines or OSes.
- *
- * @param [in] A        matrix to be dumped to file
- * @param [in] filename path to the file
- * @retval 0 if successful
- * @retval -1 if file could not be opened
- */
-MATRIX_SAVE(matrix_save, double, matrix_t, 'd', "matrix_t");
-
-/** @brief Save complex matrix A to file
- *
- * Save complex matrix A to a file given by filename. The datatype is binary and
- * may not be portable across different machines or OSes.
- *
- * @param [in] A        matrix to be dumped to file
- * @param [in] filename path to the file
- * @retval 0 if successful
- * @retval -1 if file could not be opened
- */
-MATRIX_SAVE(matrix_complex_save, complex_t, matrix_complex_t, 'c', "matrix_complex_t");
+/** @}*/
 
 
 /** @brief Copy a real matrix A to a complex matrix C
@@ -1734,5 +1612,178 @@ out:
 }
 
 #endif
+/** @}*/
+
+/** \defgroup io Save/load matrices
+ *  @{
+ */
+
+
+#define MATRIX_LOAD(FUNCTION_NAME, TYPE, MATRIX_TYPE, MATRIX_ALLOC, IDENTIFIER) \
+MATRIX_TYPE *FUNCTION_NAME(const char *filename, int *ret) \
+{ \
+    int error = 0; \
+    int type; \
+    MATRIX_TYPE *A = NULL; \
+    int rows, columns; \
+    char line[4096] = { 0 }; \
+    FILE *fh = fopen(filename, "r"); \
+    if(fh == NULL) \
+    { \
+        error = -1; \
+        goto out; \
+    } \
+\
+    fgets(line, sizeof(line)/sizeof(line[0]), fh); \
+\
+    fread(&type, sizeof(int), 1, fh); \
+    if(type != IDENTIFIER) \
+    { \
+        error = -2; \
+        goto out; \
+    } \
+\
+    fread(&rows,    sizeof(int), 1, fh); \
+    fread(&columns, sizeof(int), 1, fh); \
+    if(rows < 0 || columns < 0) \
+    { \
+        error = -3; \
+        goto out; \
+    } \
+\
+    A = MATRIX_ALLOC(rows, columns); \
+    if(A == NULL) \
+    { \
+        error = LIBHADES_ERROR_OOM; \
+        goto out; \
+    } \
+\
+    fread(&A->type, sizeof(int), 1, fh); \
+    fread(A->M,     sizeof(TYPE), A->size, fh); \
+\
+out: \
+    if(fh != NULL) \
+        fclose(fh); \
+    if(ret != NULL) \
+        *ret = error; \
+\
+    return A; \
+}
+
+/** @brief Load real matrix from file
+ *
+ * Load real matrix A from file given by filename. This function will also
+ * allocate memory for the matrix.
+ *
+ * error will be:
+ *  - 0  if successful
+ *  - -1 if file couldn't opened
+ *  - -2 wrong identifier (e.g. complex matrix instead of real)
+ *  - -3 rows/columns wrong
+ *
+ * @param [in] filename path to the file
+ * @param [out] error error code
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD(matrix_load, double, matrix_t, matrix_alloc, 'd');
+
+/** @brief Load complex matrix from file
+ *
+ * Load complex matrix A from file given by filename. This function will also
+ * allocate memory for the matrix. See \ref matrix_load.
+ *
+ * @param [in] filename path to the file
+ * @param [out] error error code
+ * @retval A matrix
+ * @retval NULL if an error occured
+ */
+MATRIX_LOAD(matrix_complex_load, complex_t, matrix_complex_t, matrix_complex_alloc, 'c');
+
+/*
+#define MATRIX_SAVE(FUNCTION_NAME, TYPE, MATRIX_TYPE, IDENTIFIER, READABLE) \
+int FUNCTION_NAME(MATRIX_TYPE *A, const char *filename) \
+{ \
+    int identifier = IDENTIFIER; \
+    FILE *fh = fopen(filename, "w"); \
+    if(fh == NULL) \
+        return -1; \
+\
+    fprintf(fh, "# %s %dx%d\n", READABLE, A->rows, A->columns); \
+    fwrite(&identifier, sizeof(int), 1, fh); \
+    fwrite(&A->rows,    sizeof(int), 1, fh); \
+    fwrite(&A->columns, sizeof(int), 1, fh); \
+    fwrite(&A->type,    sizeof(int), 1, fh); \
+    fwrite(A->M,        sizeof(TYPE), A->size, fh); \
+\
+    fclose(fh); \
+\
+    return 0; \
+}
+*/
+
+#define MATRIX_SAVE_TO_STREAM(FUNCTION_NAME, TYPE, MATRIX_TYPE, DTYPE) \
+void FUNCTION_NAME(MATRIX_TYPE *M, FILE *stream) \
+{ \
+    char d_str[512] = { 0 }; \
+    uint16_t len = 0; \
+    const int rows = M->rows, columns = M->columns; \
+\
+    /* write magic string, major number and minor number */ \
+    fwrite("\x93NUMPY\x01\x00", sizeof(char), 8, stream); \
+\
+    /* write length of header and header */ \
+    snprintf(d_str, sizeof(d_str)/sizeof(d_str[0]), "{'descr': '%s', 'fortran_order': True, 'shape': (%d, %d), }", DTYPE, rows, columns); \
+\
+    len = strlen(d_str); \
+\
+    fwrite(&len,  sizeof(len),  1,   stream); \
+    fwrite(d_str, sizeof(char), len, stream); \
+\
+    /* write matrix */ \
+    fwrite(M->M, sizeof(TYPE), M->size, stream); \
+}
+
+#define MATRIX_SAVE(FUNCTION_NAME, MATRIX_TYPE, SAVE_FUNCTION) \
+int FUNCTION_NAME(MATRIX_TYPE *M, const char *filename) \
+{ \
+    FILE *stream = fopen(filename, "w"); \
+    if(stream == NULL) \
+        return -1; \
+\
+    SAVE_FUNCTION(M, stream); \
+\
+    fclose(stream); \
+\
+    return 0; \
+};
+
+MATRIX_SAVE_TO_STREAM(matrix_complex_save_to_stream, complex_t, matrix_complex_t, "<c16");
+MATRIX_SAVE_TO_STREAM(matrix_save_to_stream,         double,    matrix_t,         "<d8");
+
+
+/** @brief Save real matrix A to file
+ *
+ * Save real matrix A to a file given by filename. The datatype is binary and
+ * may not be portable across different machines or OSes.
+ *
+ * @param [in] A        matrix to be dumped to file
+ * @param [in] filename path to the file
+ * @retval 0 if successful
+ * @retval -1 if file could not be opened
+ */
+MATRIX_SAVE(matrix_save, matrix_t, matrix_save_to_stream);
+
+/** @brief Save complex matrix A to file
+ *
+ * Save complex matrix A to a file given by filename. The datatype is binary and
+ * may not be portable across different machines or OSes.
+ *
+ * @param [in] A        matrix to be dumped to file
+ * @param [in] filename path to the file
+ * @retval 0 if successful
+ * @retval -1 if file could not be opened
+ */
+MATRIX_SAVE(matrix_complex_save, matrix_complex_t, matrix_complex_save_to_stream);
 
 /** @}*/
