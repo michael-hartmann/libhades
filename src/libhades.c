@@ -1164,6 +1164,78 @@ int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex
     return info;
 }
 
+int eig_complex_vr(matrix_complex_t *M, complex_t lambda, matrix_complex_t *vr)
+{
+    matrix_complex_t *A = NULL, *b = NULL;
+    const int rows    = M->rows;
+    const int columns = M->columns;
+
+    /* lapack */
+    char trans = 'N';
+    int info, lwork;
+    complex_t work_size, *work = NULL;
+    int m = rows+1, n = columns, nrhs = 1;
+    int lda = m, ldb = MAX(m,n);
+
+    if((A = matrix_complex_alloc(rows+1, columns)) == NULL)
+        return LIBHADES_ERROR_OOM;
+
+    if((b = matrix_complex_zeros(rows+1,1,NULL)) == NULL)
+    {
+        matrix_complex_free(A);
+        return LIBHADES_ERROR_OOM;
+    }
+    matrix_set(b, rows,0, 1);
+
+    for(int j = 0; j < columns; j++)
+    {
+        for(int i = 0; i < rows; i++)
+            matrix_set(A, i, j, matrix_get(M, i,j));
+
+        /* - lambda Id */
+        matrix_set(A, j,j, matrix_get(A,j,j)-lambda);
+
+        /* set nomalization condition */
+        matrix_set(A, rows,j, 1);
+    }
+
+    /* determine work size */
+    lwork = -1;
+    zgels_(&trans, &m, &n, &nrhs, A->M, &lda, b->M, &ldb, &work_size, &lwork, &info);
+    lwork = (int)CREAL(work_size);
+    if((work = malloc_cb(lwork*sizeof(complex_t))) == NULL)
+    {
+        matrix_complex_free(A);
+        matrix_complex_free(vr);
+        return LIBHADES_ERROR_OOM;
+    }
+
+    /* calculate eigenvector */
+    zgels_(
+        &trans, /* find least squares solution of overdetermined system */
+        &m,     /* number of rows of matrix A */
+        &n,     /* number of columns of matrix A */
+        &nrhs,  /* number of columns of matrix B */
+        A->M,   /* matrix A (will be overwritten) */
+        &lda,   /* leading dimension of A, LDA >= max(1,M) */
+        b->M,   /* on entry: right hand side vectors, on exit: solution */
+        &ldb,   /* leading dimension of B, LDB >= MAX(1,M,N) */
+        work,   /* workspace */
+        &lwork, /* dimension of work */
+        &info   /* status */
+    );
+
+    free_cb(work);
+    matrix_complex_free(A);
+
+    for(int i = 0; i < rows; i++)
+        matrix_set(vr, i,0, matrix_get(b, i,0));
+
+    matrix_complex_free(b);
+
+    return info;
+}
+
 /** @}*/
 
 

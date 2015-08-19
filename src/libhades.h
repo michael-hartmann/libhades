@@ -179,6 +179,7 @@
     int eig_sym(matrix_t *A, char *JOBZ, char *UPLO, matrix_t *w);
     int eig_herm(matrix_complex_t *A, char *JOBZ, char *UPLO, matrix_t *w);
     int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex_t *vl, matrix_complex_t *vr);
+    int eig_complex_vr(matrix_complex_t *M, complex_t lambda, matrix_complex_t *vr);
 
     int matrix_norm        (matrix_t         *A, char norm_type, double *norm);
     int matrix_complex_norm(matrix_complex_t *A, char norm_type, double *norm);
