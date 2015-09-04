@@ -1,7 +1,7 @@
 /**
  * @file   expm.c
  * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
- * @date   April, 2015
+ * @date   September, 2015
  * @brief  implement matrix exponential function
  */
 
@@ -119,7 +119,7 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
         }
 
     /* A = (V-U)^-1 * (V+U) */
-    ret = matrix_complex_invert(V);
+    ret = matrix_complex_invert(V); /* XXX solve linear system, not inv!!! */
     return_error(ret != 0, ret);
     matrix_complex_mult(V,U,1,A);
 
@@ -259,7 +259,7 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
         }
 
     /* X = (V-U)^-1 * (V+U) */
-    ret = matrix_complex_invert(V);
+    ret = matrix_complex_invert(V); /* XXX solve linear system, not inv!!! */
     return_error(ret != 0, ret);
 
     matrix_complex_mult(V,U,1,A);
