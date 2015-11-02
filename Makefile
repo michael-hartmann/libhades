@@ -14,6 +14,8 @@ all:
 
 install:
 	cp libhades.so /usr/lib
+	cp src/libhades*.h /usr/include
+	cp -R src/libhades /usr/include
 
 tests:
 	${CC} -std=c99 -Wall -O3 ${TESTS}/tests.c -I ${SRC} -L . -I /:/home/physik/theo1/hartmmic/libs -L /:/home/physik/theo1/hartmmic/libs -lm -lhades -lunittest -llapacke -llapack -lblas -lgfortran -o libhades_tests
