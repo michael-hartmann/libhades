@@ -91,7 +91,7 @@ Installation
 ------------
 
 You need the development version of LAPACK and BLAS installed on your computer. On
-Ubuntu/Debian you can install the dependencies using:::
+Ubuntu/Debian you can install the dependencies using::
 
     $ apt-get install gcc libc6-dev make libblas-dev liblapack-dev
 
