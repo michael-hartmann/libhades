@@ -21,6 +21,19 @@ LAPACK or BLAS do all the job, you have a simple and clean API. And in case you
 really need to call a LAPACK function yourself, you can still do so.
 
 
+Features
+--------
+
+  - basic operations on matrices like addition, multiplication...
+  - calculating trace and determinant
+  - LU decomposition and inverting of matrices
+  - Kronecker product
+  - eigenvalue problems
+  - matrix exponential using squaring and scaling algorithm with Padé-approximation
+  - integration of ordinary differential equations
+  - symplectic integrator
+
+
 Examples
 --------
 
@@ -72,11 +85,15 @@ A full example to invert a real matrix::
 Installation
 ------------
 
-At the moment there is no build system. Change to the directory libhades/ and run::
+You need the development version of LAPACK and BLAS installed on your computer. On
+Ubuntu/Debian you can install the dependencies using:::
+    $ apt-get install gcc libc6-dev make libblas-dev liblapack-dev
+
+At the moment there is no build system. To compile the library change to the
+directory libhades/ and run::
 
     make
-This will compile the library. You need the development version of LAPACK and
-BLAS installed on your computer.
+This will compile the library.
 
 
 Documentation
@@ -97,3 +114,12 @@ License information
 -------------------
 
 libhades is free software licensed under the GNU GPL Version 2.
+
+
+Bibliography
+------------
+
+  - Moler, Loan, "Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later", SIAM Review, 2005
+  - Awad H. Al-Mohy and Nicholas J. Higham (2009) "A New Scaling and Squaring Algorithm for the Matrix Exponential." SIAM Journal on Matrix Analysis and Applications. 31 (3). pp. 970-989. ISSN 1095-7162
+  - Higham, "Functions of Matrices: Theory and Computation", Society for Industrial and Applied Mathematics, 2008
+  - Markiewicz, "Survey On Symplectic Integrators"
