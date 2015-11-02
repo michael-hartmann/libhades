@@ -24,71 +24,70 @@ really need to call a LAPACK function yourself, you can still do so.
 Examples
 --------
 
-Allocate a real 3x3 matrix:
-.. code-block:: c
-
-   matrix_t *M = matrix_alloc(3,3);
+Allocate a real 3x3 matrix: ::
+    matrix_t *M = matrix_alloc(3,3);
 
 
-Create a complex 4x4 matrix and initialize it as identity matrix:
-.. code-block:: c
-
-   matrix_t *M = matrix_complex_eye(3,3);
+Create a complex 4x4 matrix and initialize it as identity matrix: ::
+    matrix_t *M = matrix_complex_eye(3,3);
 
 
-Multiply two complex matrices and create a new matrix C=A*B:
-.. code-block:: c
-
-   matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
+Multiply two complex matrices and create a new matrix C=A*B: ::
+    matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
 
 
-Calculate eigenvalues and right eigenvectors of a generic complex matrix M:
-.. code-block:: c
-   eig_complex_generic(M, w, NULL, vr);
+Calculate eigenvalues and right eigenvectors of a generic complex matrix M: ::
+    eig_complex_generic(M, w, NULL, vr);
 
-A full example to invert a real matrix:
-```
-#include <stdio.h>
-#include <libhades.h>
+A full example to invert a real matrix: ::
+    #include <stdio.h>
+    #include <libhades.h>
 
-int main(int argc, char *argv[])
-{
-    matrix_t *M = matrix_alloc(2,2);
+    int main(int argc, char *argv[])
+    {
+        matrix_t *M = matrix_alloc(2,2);
 
-    matrix_set(M, 0,0, 1);
-    matrix_set(M, 0,1, 2);
-    matrix_set(M, 1,0, 3);
-    matrix_set(M, 1,1, 4);
+        matrix_set(M, 0,0, 1);
+        matrix_set(M, 0,1, 2);
+        matrix_set(M, 1,0, 3);
+        matrix_set(M, 1,1, 4);
 
-    printf("Inverse of\n");
-    matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
+        printf("Inverse of\n");
+        matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
 
-    matrix_invert(M);
-    
-    printf("is:\n");
-    matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
-     
-    return 0;
-}
-```
+        matrix_invert(M);
+        
+        printf("is:\n");
+        matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
+         
+        return 0;
+    }
 
 
 Installation
 ------------
 
+At the moment there is no build system. Change to the directory libhades/ and run: ::
+    make
+This will compile the library. You need the development version of LAPACK and
+BLAS installed on your computer.
+
 
 Documentation
 -------------
+
+Documentation is available using Doxygen.
 
 
 How to contribute
 -----------------
 
-
-
-Bug reports
------------
+Send bug reports, feature requests and merge requests! libhades is still in
+development and there are probably a lot of bugs. I'm also happy for more unit
+tests.
 
 
 License information
 -------------------
+
+libhades is free software licensed under the GNU GPL Version 2.
