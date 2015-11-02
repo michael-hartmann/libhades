@@ -47,7 +47,7 @@ Calculate eigenvalues and right eigenvectors of a generic complex matrix M:
    eig_complex_generic(M, w, NULL, vr);
 
 A full example to invert a real matrix:
-```c
+```
 #include <stdio.h>
 #include <libhades.h>
 
