@@ -5,11 +5,11 @@ OPT     = -O3
 CC      = gcc
 
 all:
-	${CC} -std=c99 -Wall -Werror ${OPT} -I src/ -c -fpic src/libhades.c -o libhades.o
-	${CC} -std=c99 -Wall -Werror ${OPT} -I src/ -c -fpic src/optimize.c -o optimize.o
-	${CC} -std=c99 -Wall -Werror ${OPT} -I src/ -c -fpic src/odeint.c   -o odeint.o
-	${CC} -std=c99 -Wall -Werror ${OPT} -I src/ -c -fpic src/expm.c     -o expm.o
-	${CC} -std=c99 -Wall -Werror ${OPT} -I src/ -c -fpic src/parse_npy_dict.c -o parse_npy_dict.o
+	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/libhades.c -o libhades.o
+	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/optimize.c -o optimize.o
+	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/odeint.c   -o odeint.o
+	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/expm.c     -o expm.o
+	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/parse_npy_dict.c -o parse_npy_dict.o
 	${CC} -shared -Wl,-soname,libhades.so -o libhades.so libhades.o optimize.o odeint.o expm.o parse_npy_dict.o
 
 install:
