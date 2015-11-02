@@ -24,14 +24,14 @@ really need to call a LAPACK function yourself, you can still do so.
 Features
 --------
 
-  - basic operations on matrices like addition, multiplication...
-  - calculating trace and determinant
-  - LU decomposition and inverting of matrices
-  - Kronecker product
-  - eigenvalue problems
-  - matrix exponential using squaring and scaling algorithm with Padé-approximation
-  - integration of ordinary differential equations
-  - symplectic integrator
+- basic operations on matrices like addition, multiplication...
+- calculating trace and determinant
+- LU decomposition and inverting of matrices
+- Kronecker product
+- eigenvalue problems
+- matrix exponential using squaring and scaling algorithm with Padé-approximation
+- integration of ordinary differential equations
+- symplectic integrator
 
 
 Examples
@@ -119,7 +119,7 @@ libhades is free software licensed under the GNU GPL Version 2.
 Bibliography
 ------------
 
-  - Moler, Loan, "Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later", SIAM Review, 2005
-  - Awad H. Al-Mohy and Nicholas J. Higham (2009) "A New Scaling and Squaring Algorithm for the Matrix Exponential." SIAM Journal on Matrix Analysis and Applications. 31 (3). pp. 970-989. ISSN 1095-7162
-  - Higham, "Functions of Matrices: Theory and Computation", Society for Industrial and Applied Mathematics, 2008
-  - Markiewicz, "Survey On Symplectic Integrators"
+- Moler, Loan, "Nineteen Dubious Ways to Compute the Exponential of a Matrix, Twenty-Five Years Later", SIAM Review, 2005
+- Awad H. Al-Mohy and Nicholas J. Higham (2009) "A New Scaling and Squaring Algorithm for the Matrix Exponential." SIAM Journal on Matrix Analysis and Applications. 31 (3). pp. 970-989. ISSN 1095-7162
+- Higham, "Functions of Matrices: Theory and Computation", Society for Industrial and Applied Mathematics, 2008
+- Markiewicz, "Survey On Symplectic Integrators"
