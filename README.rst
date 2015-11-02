@@ -31,19 +31,47 @@ Allocate a real 3x3 matrix:
 
 
 Create a complex 4x4 matrix and initialize it as identity matrix:
+.. code-block:: c
 
    matrix_t *M = matrix_complex_eye(3,3);
 
 
 Multiply two complex matrices and create a new matrix C=A*B:
+.. code-block:: c
 
    matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
 
 
 Calculate eigenvalues and right eigenvectors of a generic complex matrix M:
-
+.. code-block:: c
    eig_complex_generic(M, w, NULL, vr);
 
+A full example to invert a real matrix:
+.. code-block:: c
+   :linenos:
+
+   #include <stdio.h>
+   #include <libhades.h>
+
+   int main(int argc, char *argv[])
+   {
+       matrix_t *M = matrix_alloc(2,2);
+
+       matrix_set(M, 0,0, 1);
+       matrix_set(M, 0,1, 2);
+       matrix_set(M, 1,0, 3);
+       matrix_set(M, 1,1, 4);
+
+       printf("Inverse of\n");
+       matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
+
+       matrix_invert(M);
+    
+       printf("is:\n");
+       matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
+     
+       return 0;
+   }
 
 Installation
 ------------
