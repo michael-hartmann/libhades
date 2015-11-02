@@ -47,31 +47,31 @@ Calculate eigenvalues and right eigenvectors of a generic complex matrix M:
    eig_complex_generic(M, w, NULL, vr);
 
 A full example to invert a real matrix:
-.. code-block:: c
-   :linenos:
+```c
+#include <stdio.h>
+#include <libhades.h>
 
-   #include <stdio.h>
-   #include <libhades.h>
+int main(int argc, char *argv[])
+{
+    matrix_t *M = matrix_alloc(2,2);
 
-   int main(int argc, char *argv[])
-   {
-       matrix_t *M = matrix_alloc(2,2);
+    matrix_set(M, 0,0, 1);
+    matrix_set(M, 0,1, 2);
+    matrix_set(M, 1,0, 3);
+    matrix_set(M, 1,1, 4);
 
-       matrix_set(M, 0,0, 1);
-       matrix_set(M, 0,1, 2);
-       matrix_set(M, 1,0, 3);
-       matrix_set(M, 1,1, 4);
+    printf("Inverse of\n");
+    matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
 
-       printf("Inverse of\n");
-       matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
-
-       matrix_invert(M);
+    matrix_invert(M);
     
-       printf("is:\n");
-       matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
+    printf("is:\n");
+    matrix_fprintf(stdout, M, "%+4g", "  ", "\n");
      
-       return 0;
-   }
+    return 0;
+}
+```
+
 
 Installation
 ------------
