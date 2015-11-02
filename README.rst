@@ -25,8 +25,9 @@ Examples
 --------
 
 Allocate a real 3x3 matrix:
-.. code:: C
-matrix_t *M = matrix_alloc(3,3);
+.. code-block:: c
+
+   matrix_t *M = matrix_alloc(3,3);
 
 
 Create a complex 4x4 matrix and initialize it as identity matrix:
