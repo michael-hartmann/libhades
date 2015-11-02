@@ -56,7 +56,8 @@ Calculate eigenvalues and right eigenvectors of a generic complex matrix M::
 
     eig_complex_generic(M, w, NULL, vr);
 
-A full example to invert a real matrix::
+A full example to invert a real matrix (this is an example in the examples/
+directory)::
 
     #include <stdio.h>
     #include <libhades.h>
@@ -81,6 +82,9 @@ A full example to invert a real matrix::
         return 0;
     }
 
+You can compile this file using::
+    gcc -O2 -Wall invert.c -o invert -lm -lhades -llapack -lblas
+
 
 Installation
 ------------
@@ -93,7 +97,10 @@ At the moment there is no build system. To compile the library change to the
 directory libhades/ and run::
 
     make
-This will compile the library.
+    make install
+
+This will compile the library and copy the shared object file libhades.so to
+/usr/lib. You might need to run ldconfig afterwards.
 
 
 Documentation
