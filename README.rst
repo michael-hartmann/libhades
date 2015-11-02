@@ -83,6 +83,7 @@ directory)::
     }
 
 You can compile this file using::
+
     gcc -O2 -Wall invert.c -o invert -lm -lhades -llapack -lblas
 
 
@@ -91,6 +92,7 @@ Installation
 
 You need the development version of LAPACK and BLAS installed on your computer. On
 Ubuntu/Debian you can install the dependencies using:::
+
     $ apt-get install gcc libc6-dev make libblas-dev liblapack-dev
 
 At the moment there is no build system. To compile the library change to the
