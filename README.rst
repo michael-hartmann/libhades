@@ -30,18 +30,18 @@ matrix_t *M = matrix_alloc(3,3);
 
 
 Create a complex 4x4 matrix and initialize it as identity matrix:
-.. code:: C
-matrix_t *M = matrix_complex_eye(3,3);
+
+   matrix_t *M = matrix_complex_eye(3,3);
 
 
 Multiply two complex matrices and create a new matrix C=A*B:
-.. code:: C
-matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
+
+   matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
 
 
 Calculate eigenvalues and right eigenvectors of a generic complex matrix M:
-.. code:: C
-eig_complex_generic(M, w, NULL, vr);
+
+   eig_complex_generic(M, w, NULL, vr);
 
 
 Installation
