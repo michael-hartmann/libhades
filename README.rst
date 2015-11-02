@@ -24,22 +24,27 @@ really need to call a LAPACK function yourself, you can still do so.
 Examples
 --------
 
-Allocate a real 3x3 matrix: ::
+Allocate a real 3x3 matrix::
+
     matrix_t *M = matrix_alloc(3,3);
 
 
-Create a complex 4x4 matrix and initialize it as identity matrix: ::
+Create a complex 4x4 matrix and initialize it as identity matrix::
+
     matrix_t *M = matrix_complex_eye(3,3);
 
 
-Multiply two complex matrices and create a new matrix C=A*B: ::
+Multiply two complex matrices and create a new matrix C=A*B::
+
     matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
 
 
-Calculate eigenvalues and right eigenvectors of a generic complex matrix M: ::
+Calculate eigenvalues and right eigenvectors of a generic complex matrix M::
+
     eig_complex_generic(M, w, NULL, vr);
 
-A full example to invert a real matrix: ::
+A full example to invert a real matrix::
+
     #include <stdio.h>
     #include <libhades.h>
 
@@ -67,7 +72,8 @@ A full example to invert a real matrix: ::
 Installation
 ------------
 
-At the moment there is no build system. Change to the directory libhades/ and run: ::
+At the moment there is no build system. Change to the directory libhades/ and run::
+
     make
 This will compile the library. You need the development version of LAPACK and
 BLAS installed on your computer.
