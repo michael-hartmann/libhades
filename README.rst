@@ -24,14 +24,14 @@ really need to call a LAPACK function yourself, you can still do so.
 Features
 --------
 
-- basic operations on matrices like addition, multiplication...
-- calculating trace and determinant
+- low-level operations on matrices like addition, multiplication...
+- calculation of trace, determinant and norm of matrices
 - LU decomposition and inverting of matrices
 - Kronecker product
 - eigenvalue problems
 - matrix exponential using squaring and scaling algorithm with Padé-approximation
 - integration of ordinary differential equations
-- symplectic integrator
+- symplectic implicit integrator
 
 
 Examples
@@ -41,16 +41,13 @@ Allocate a real 3x3 matrix::
 
     matrix_t *M = matrix_alloc(3,3);
 
-
-Create a complex 4x4 matrix and initialize it as identity matrix::
+Create a complex 4x4 identity matrix::
 
     matrix_t *M = matrix_complex_eye(3,3);
-
 
 Multiply two complex matrices and create a new matrix C=A*B::
 
     matrix_complex_t *C = matrix_complex_mult(A,B,NULL)
-
 
 Calculate eigenvalues and right eigenvectors of a generic complex matrix M::
 
@@ -86,6 +83,8 @@ You can compile this file using::
 
     gcc -O2 -Wall invert.c -o invert -lm -lhades -llapack -lblas
 
+There are more examples available in the examples/ directory. Just have a look!
+
 
 Installation
 ------------
@@ -116,7 +115,7 @@ How to contribute
 -----------------
 
 Send bug reports, feature requests and merge requests! libhades is still in
-development and there are probably a lot of bugs. I'm also happy for more unit
+development and there are probably a lot of bugs. I'm also happy for unit
 tests.
 
 
