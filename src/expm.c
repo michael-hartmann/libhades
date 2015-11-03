@@ -1,7 +1,7 @@
 /**
  * @file   expm.c
  * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
- * @date   September, 2015
+ * @date   November, 2015
  * @brief  implement matrix exponential function
  */
 
@@ -107,21 +107,24 @@ static int _expm_pade3579(matrix_complex_t *A, int M)
         A2n = NULL;
     }
 
-    /* U = V+U, V = V-U */
+    /* A = V+U, V = V-U */
     for(int i = 0; i < dim; i++)
         for(int j = 0; j < dim; j++)
         {
             const complex_t Uij = matrix_get(U,i,j);
             const complex_t Vij = matrix_get(V,i,j);
 
-            matrix_set(U, i,j, Vij+Uij);
+            matrix_set(A, i,j, Vij+Uij);
             matrix_set(V, i,j, Vij-Uij);
         }
 
+    /* free matrix U */
+    matrix_complex_free(U);
+    U = NULL;
+
     /* A = (V-U)^-1 * (V+U) */
-    ret = matrix_complex_invert(V); /* XXX solve linear system, not inv!!! */
+    ret = matrix_complex_solve(V,A);
     return_error(ret != 0, ret);
-    matrix_complex_mult(V,U,1,A);
 
 out:
     if(U != NULL)
@@ -247,24 +250,24 @@ static int _expm_ss(matrix_complex_t *A, const double norm)
     matrix_complex_free(A6);
     A2 = A4 = A6 = NULL;
 
-    /* U = V+U, V = V-U */
+    /* A = V+U, V = V-U */
     for(int i = 0; i < dim; i++)
         for(int j = 0; j < dim; j++)
         {
             const complex_t Uij = matrix_get(U,i,j);
             const complex_t Vij = matrix_get(V,i,j);
 
-            matrix_set(U, i,j, Vij+Uij);
+            matrix_set(A, i,j, Vij+Uij);
             matrix_set(V, i,j, Vij-Uij);
         }
 
-    /* X = (V-U)^-1 * (V+U) */
-    ret = matrix_complex_invert(V); /* XXX solve linear system, not inv!!! */
-    return_error(ret != 0, ret);
-
-    matrix_complex_mult(V,U,1,A);
+    /* free matrix U */
     matrix_complex_free(U);
     U = NULL;
+
+    /* X = (V-U)^-1 * (V+U) */
+    ret = matrix_complex_solve(V,A);
+    return_error(ret != 0, ret);
 
     /* square */
     _expm_square(A, V, s);
