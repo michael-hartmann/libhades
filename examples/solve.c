@@ -5,7 +5,7 @@ int main(int argc, char *argv[])
 {
     matrix_t *M, *B;
 
-    /* allocate memory for matrix M1 */
+    /* allocate memory for matrix M */
     M = matrix_alloc(3,3);
 
     /* initialize matrix */
@@ -21,8 +21,10 @@ int main(int argc, char *argv[])
     matrix_set(M, 2,1, 4);
     matrix_set(M, 2,2, 3);
 
+    /* allocate memory for matrix B and initialize B as identity matrix */
     B = matrix_eye(3,NULL);
 
+    /* As B=Id, we're actually calculatinf the inverse of M */
     matrix_solve(M, B);
 
     matrix_fprintf(stdout, B, "%+5g", "  ", "\n");

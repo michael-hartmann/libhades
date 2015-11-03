@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    /* allocate memory for matrix M1 */
+    /* allocate memory for matrix M */
     matrix_complex_t *M = matrix_complex_alloc(3,3);
 
     /* initialize matrix:
@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
 
     matrix_complex_fprintf(stdout, M, "%+5g%+0gi", "  ", "\n");
 
-    /* free matrices M, B */
+    /* free matrices M */
     matrix_complex_free(M);
 
     return 0;

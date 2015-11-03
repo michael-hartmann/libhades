@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
     printf("info = %d\n", info);
     matrix_fprintf(stdout, M, "%g", "  ", "\n");
 
-    /* free matrices M, B */
+    /* free matrices M */
     matrix_free(M);
 
     return 0;
