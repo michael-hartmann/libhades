@@ -144,21 +144,39 @@ ARGXXX(argabsmax, fabs, >)
  *  @{
  */
 
+static inline void _swap(int *a, int *b);
+static inline void _swap(int *a, int *b)
+{
+    int c = *a;
+    *a = *b;
+    *b = c;
+}
+
 #define MATRIX_SWAP(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
 void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
 { \
-    int temp; \
+    /* swap pointers */ \
     TYPE *ptr = A->M; \
     A->M = B->M; \
     B->M = ptr; \
-    \
-    temp = A->rows; \
-    A->rows = B->rows; \
-    B->rows = temp; \
-    \
-    temp = A->columns; \
-    A->columns = B->columns; \
-    B->columns = temp; \
+\
+    /* swap rows */ \
+    _swap(&A->rows, &B->rows); \
+\
+    /* swap columns */ \
+    _swap(&A->columns, &B->columns); \
+\
+    /* swap min */ \
+    _swap(&A->min, &B->min); \
+\
+    /* swap size */ \
+    _swap(&A->size, &B->size); \
+\
+    /* swap type */ \
+    _swap(&A->type, &B->type); \
+\
+    /* swap min */ \
+    _swap(&A->min, &B->min); \
 }
 
 /** @brief Swap matrices A and B
