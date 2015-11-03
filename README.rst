@@ -108,7 +108,8 @@ This will compile the library and copy the shared object file libhades.so to
 Documentation
 -------------
 
-Documentation is available using Doxygen.
+Documentation is available using Doxygen at
+https://michael-hartmann.github.io/libhades/html/.
 
 
 How to contribute
