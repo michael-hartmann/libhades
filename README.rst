@@ -86,6 +86,34 @@ You can compile this file using::
 There are more examples available in the examples/ directory. Just have a look!
 
 
+Accessing LAPACK function
+-------------------------
+
+It's easy to access LAPACK functions. The matrix type is just a struct with
+some information on the matrix, for example matrix_t is defined as::
+    typedef struct {
+        int rows;    /**< rows of matrix */
+        int columns; /**< columns of matrix */
+        int min;     /**< MIN(rows,columns) */
+        int size;    /**< size = rows*columns */
+        int type;    /**< type of matrix */
+        int view;    /**< matrix is a view */
+        double *M;   /**< data in column major order */
+    } matrix_t;
+ 
+M is a pointer the memory. The matrix is saved in column-major order (or
+Fortran order). For this reason you don't have to transpose matrices. We store
+the matrix just like LAPACK. To access matrix elements, use the macros
+matrix_get and matrix set::
+
+    M10 = matrix_get(M, 1,0); /* get matrix element in 2nd row, 1st column /*
+    matrix_set(M, 2,3, 5);    /* set matrix element in 2nd row, 3rd column to 5 */
+
+To call LAPACK function, just call the function name of the LAPACK function and
+add an underscore at the end. So, if you want to call dgetrf, call dgetrf_.
+There is one example available, so have a look at examples/lu_lapack.c.
+
+
 Installation
 ------------
 
