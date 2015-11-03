@@ -1,0 +1,13 @@
+\form#0:\[ \frac{\mathrm{d}}{\mathrm{d}t} y = f(t,y) \]
+\form#1:\[ \begin{array}{ccc} 1 & 2 & 3 \\ 4 & 5 & 6 \end{array} \]
+\form#2:\[ \begin{array}{c|cc} 1 & 2 & 3 \\ 4 & 5 & 6 \end{array} \]
+\form#3:\[ \begin{array}{c|cc} 1 & 2 & 3 \\ 4 & 5 & 6 \\ \hline \\ & 1/2 & 1/2 \end{array} \]
+\form#4:\[ \begin{array}{c|cc} 1 & 2 & 3 \\ 4 & 5 & 6 \\ \hline \\ & \frac{1}{2} & \frac{1}{2} \end{array} \]
+\form#5:\[ \begin{array}{c|cc} \frac{1}{2} - \frac{1}{6} \sqrt{3} & 2 & 3 \\ \frac{1}{2} + \frac{1}{6} \sqrt{3} & 5 & 6 \\ \hline \\ & \frac{1}{2} & \frac{1}{2} \end{array} \]
+\form#6:\[ \begin{array}{c|cc} \frac{1}{2} - \frac{1}{6} \sqrt{3} & \frac{1}{4} & \frac{1}{4} \\ \frac{1}{2} + \frac{1}{6} \sqrt{3} & \frac{1}{4} & \frac{1}{4} \\ \hline \\ & \frac{1}{2} & \frac{1}{2} \end{array} \]
+\form#7:\[ \begin{array}{c|cc} \frac{1}{2} - \frac{1}{6} \sqrt{3} & \frac{1}{4} & \frac{1}{4} - \frac{1}{6} \sqrt{3} \\ \frac{1}{2} + \frac{1}{6} \sqrt{3} & \frac{1}{4} + \frac{1}{6} \sqrt{3} & \frac{1}{4} \\ \hline \\ & \frac{1}{2} & \frac{1}{2} \end{array} \]
+\form#8:\[ \begin{array}{c|cc} \frac{1}{2} - \frac{1}{6} \sqrt{3} & \frac{1}{4} & \frac{1}{4} - \frac{1}{6} \sqrt{3} \\ \frac{1}{2} + \frac{1}{6} \sqrt{3} & \frac{1}{4} + \frac{1}{6} \sqrt{3} & \frac{1}{4} \\ \hline \\ & \frac{1}{2} & \frac{1}{2} \end{array}. \]
+\form#9:\[ y_{n+1} = y_n + h\sum_{j=1}^{s=2} b_j f(t_n+c_j h, y_n + Z_{jn}) \]
+\form#10:\[ Z_{in} - h\sum_{j=1}^{s=2} a_{ij} f(t_n+c_i h, y_n+Z_{jn}) = 0. \]
+\form#11:$Z_{1n}, Z_{2n}$
+\form#12:\[ \frac{\mathrm{d}}{\mathrm{d}t} y(t) = f(t,y) \]
