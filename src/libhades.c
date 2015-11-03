@@ -1467,6 +1467,25 @@ MATRIX_INVERT(matrix_invert, double, matrix_t, matrix_lu_decomposition, dgetri_)
  */
 MATRIX_INVERT(matrix_complex_invert, complex_t, matrix_complex_t, matrix_complex_lu_decomposition, zgetri_)
 
+#define MATRIX_SOLVE(FUNCTION_NAME, MATRIX_TYPE, LU_DECOMPOSITION, XGETRS) \
+int FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *b) \
+{ \
+    int N = A->min; \
+    char trans = 'N'; \
+    int nrhs = b->columns; \
+    int info = -1; \
+    int *ipiv = malloc_cb(N*sizeof(int)); \
+\
+    if(ipiv == NULL) \
+        return LIBHADES_ERROR_OOM; \
+\
+    LU_DECOMPOSITION(A, ipiv); \
+    XGETRS(&trans, &N, &nrhs, A->M, &N, ipiv, b->M, &N, &info); \
+\
+    free_cb(ipiv); \
+\
+    return info; \
+}
 
 /** @brief Solve system of linear equations
  *
@@ -1478,26 +1497,23 @@ MATRIX_INVERT(matrix_complex_invert, complex_t, matrix_complex_t, matrix_complex
  *
  * @retval INFO
  */
-int matrix_solve(matrix_t *A, matrix_t *b)
-{
-    int N = A->min;
-    char trans = 'N';
-    int nrhs = b->columns;
-    int info = -1;
-    int *ipiv = malloc_cb(N*sizeof(int));
-
-    if(ipiv == NULL)
-        return LIBHADES_ERROR_OOM;
-
-    matrix_lu_decomposition(A, ipiv);
-    dgetrs_(&trans, &N, &nrhs, A->M, &N, ipiv, b->M, &N, &info);
-
-    free_cb(ipiv);
-
-    return info;
-}
 
 /** @}*/
+MATRIX_SOLVE(matrix_solve, matrix_t, matrix_lu_decomposition, dgetrs_);
+
+/** @brief Solve system of linear equations
+ *
+ * Solve the system of complex linear equations:
+ *      A*x = b
+ *
+ * @param [in,out] A complex matrix
+ * @param [in,out] b complex vector/matrix
+ *
+ * @retval INFO
+ */
+
+/** @}*/
+MATRIX_SOLVE(matrix_complex_solve, matrix_complex_t, matrix_complex_lu_decomposition, zgetrs_);
 
 /*
 static void _cblas_zaxpy(const int N, const double alpha, const void *X, const int incX, void *Y, const int incY)

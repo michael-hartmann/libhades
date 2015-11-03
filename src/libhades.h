@@ -201,4 +201,5 @@
     int sparse_complex_eig(int nx, int nev, char *which, void (*Av)(int nx, complex_t *in, complex_t *out, void *data), complex_t *d, int mxiter, double tol, void *data);
 
     int matrix_solve(matrix_t *A, matrix_t *b);
+    int matrix_complex_solve(matrix_complex_t *A, matrix_complex_t *b);
 #endif
