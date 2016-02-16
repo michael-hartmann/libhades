@@ -43,7 +43,7 @@ Allocate a real 3x3 matrix::
 
 Create a complex 4x4 identity matrix::
 
-    matrix_t *M = matrix_complex_eye(3,3);
+    matrix_t *M = matrix_complex_eye(4,4);
 
 Multiply two complex matrices and create a new matrix C=A*B::
 
