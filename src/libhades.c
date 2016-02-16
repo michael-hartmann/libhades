@@ -1104,8 +1104,8 @@ int eig_herm(matrix_complex_t *A, char *JOBZ, char *UPLO, matrix_t *w)
  *
  * @param [in] A real matrix
  * @param [in] w list containing the eigenvalues of A
- * @param [in] vr if vr != NULL, right eigenvectors are computed and will be stored in vr; vr must be a complex matrix of dimension (dim,1) (i.e. a vector)
- * @param [in] vl if vl != NULL, lefft eigenvectors are computed and will be stored in vl; vl must be a complex matrix of dimension (dim,1) (i.e. a vector)
+ * @param [in] vr if vr != NULL, right eigenvectors are computed and will be stored in vr; vr must be a complex matrix of dimension (dim,dim)
+ * @param [in] vl if vl != NULL, lefft eigenvectors are computed and will be stored in vl; vl must be a complex matrix of dimension (dim,dim)
  *
  * @retval 0 on success
  */
