@@ -33,10 +33,10 @@
         self->f    = f; \
         self->args = args; \
 \
-        for(int i = 0; i < sizeof(self->workspace)/sizeof(self->workspace[0]); i++) \
+        for(unsigned int i = 0; i < sizeof(self->workspace)/sizeof(self->workspace[0]); i++) \
             self->workspace[i] = NULL; \
 \
-        for(int i = 0; i < sizeof(self->workspace)/sizeof(self->workspace[0]); i++) \
+        for(unsigned int i = 0; i < sizeof(self->workspace)/sizeof(self->workspace[0]); i++) \
         { \
             self->workspace[i] = MATRIX_ALLOC(dim,1); \
             if(self->workspace[i] == NULL) \
@@ -341,7 +341,7 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
 
         /* determine starting approximations */
         {
-            const double t[] = { tn, tn+h*c1, tn+h*c2 };
+            const double t_array[] = { tn, tn+h*c1, tn+h*c2 };
             double f[3];
             f[0] = 0;
 
@@ -351,7 +351,7 @@ int rk4_symplectic_integrate(rk4_symplectic_t *self, matrix_t *yn, double t, dou
                 f[1] = matrix_get(Z1, k,0);
                 f[2] = matrix_get(Z2, k,0);
 
-                interpolate(tn+c1*h, tn+c2*h, t, f, &w1, &w2);
+                interpolate(tn+c1*h, tn+c2*h, t_array, f, &w1, &w2);
 
                 matrix_set(Z1, k,0, w1);
                 matrix_set(Z2, k,0, w2);
