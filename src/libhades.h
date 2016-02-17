@@ -99,10 +99,10 @@
     void *libhades_realloc(void *ptr, size_t size);
     void libhades_free(void *ptr);
 
-    int argmin   (double list[], int size);
-    int argmax   (double list[], int size);
-    int argabsmin(double list[], int size);
-    int argabsmax(double list[], int size);
+    size_t argmin   (double list[], size_t size);
+    size_t argmax   (double list[], size_t size);
+    size_t argabsmin(double list[], size_t size);
+    size_t argabsmax(double list[], size_t size);
 
     void matrix_set_alloc(void *(*_malloc_cb)(size_t), void  (*_free_cb)(void *));
 

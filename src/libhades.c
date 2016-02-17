@@ -93,10 +93,10 @@ static void  (*free_cb)(void *)            = &libhades_free;
 
 /** macro to create functions argmin, argmax, argabsmin, argabsmax */
 #define ARGXXX(FUNCTION_NAME, FUNCTION, RELATION) \
-int FUNCTION_NAME(double list[], int size) \
+size_t FUNCTION_NAME(double list[], size_t size) \
 { \
-    int index = 0; \
-    for(int i = 0; i < size; i++) \
+    size_t index = 0; \
+    for(size_t i = 0; i < size; i++) \
         if(FUNCTION(list[i]) RELATION FUNCTION(list[index])) \
             index = i; \
     return index; \
@@ -145,10 +145,19 @@ ARGXXX(argabsmax, fabs, >)
  *  @{
  */
 
-static inline void _swap(int *a, int *b);
-static inline void _swap(int *a, int *b)
+static inline void _swap_int(int *a, int *b);
+static inline void _swap_size_t(size_t *a, size_t *b);
+
+static inline void _swap_int(int *a, int *b)
 {
     int c = *a;
+    *a = *b;
+    *b = c;
+}
+
+static inline void _swap_size_t(size_t *a, size_t *b)
+{
+    size_t c = *a;
     *a = *b;
     *b = c;
 }
@@ -162,24 +171,22 @@ void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
     B->M = ptr; \
 \
     /* swap rows */ \
-    _swap(&A->rows, &B->rows); \
+    _swap_int(&A->rows, &B->rows); \
 \
     /* swap columns */ \
-    _swap(&A->columns, &B->columns); \
+    _swap_int(&A->columns, &B->columns); \
 \
     /* swap min */ \
-    _swap(&A->min, &B->min); \
+    _swap_int(&A->min, &B->min); \
 \
     /* swap size */ \
-    size_t temp = A->size; \
-    A->size = B->size; \
-    B->size = temp; \
+    _swap_size_t(&A->size, &B->size); \
 \
     /* swap type */ \
-    _swap(&A->type, &B->type); \
+    _swap_int(&A->type, &B->type); \
 \
     /* swap min */ \
-    _swap(&A->min, &B->min); \
+    _swap_int(&A->min, &B->min); \
 }
 
 /** @brief Swap matrices A and B
@@ -384,17 +391,22 @@ void matrix_complex_fprintf(FILE *stream, matrix_complex_t *A, const char *forma
 #define MATRIX_ALLOC(FUNCTION_NAME, MTYPE, TYPE) \
 MTYPE *FUNCTION_NAME(int rows, int columns) \
 { \
+    if(rows <= 0 || columns <= 0) \
+        return NULL; \
+\
     MTYPE *A = malloc_cb(sizeof(MTYPE)); \
     if(A == NULL) \
         return NULL; \
 \
+    const size_t size = (size_t)rows*(size_t)columns; \
+\
     A->rows    = rows; \
     A->columns = columns; \
     A->min     = MIN(rows, columns); \
-    A->size    = rows*columns; \
+    A->size    = size; \
     A->type    = 0; \
     A->view    = 0; \
-    A->M       = malloc_cb(rows*columns*sizeof(TYPE)); \
+    A->M       = malloc_cb(size*sizeof(TYPE)); \
     if(A->M == NULL) \
     { \
         free_cb(A); \
@@ -413,8 +425,8 @@ MTYPE *FUNCTION_NAME(int rows, int columns) \
  * The matrix elements will be undefined. To allocate a matrix initialized with
  * zeros, see matrix_zeros. To create a unity matrix, see matrix_eye.
  *
- * @param [in] rows rows of matrix M
- * @param [in] columns columns of matrix M
+ * @param [in] rows rows of matrix M (rows > 0)
+ * @param [in] columns columns of matrix M (columns > 0)
  *
  * @retval A real matrix if successful, NULL otherwise
  */
@@ -424,8 +436,8 @@ MATRIX_ALLOC(matrix_alloc, matrix_t, double)
  *
  * See matrix_alloc.
  *
- * @param [in] rows rows of matrix M
- * @param [in] columns columns of matrix M
+ * @param [in] rows rows of matrix M (rows > 0)
+ * @param [in] columns columns of matrix M (columns > 0)
  *
  * @retval A complex matrix if successful, otherwise NULL
  */
@@ -477,9 +489,9 @@ MATRIX_ZEROS(matrix_complex_zeros, matrix_complex_t, complex_t, matrix_complex_a
 #define MATRIX_SETALL(FUNCTION_NAME, MATRIX_TYPE, TYPE) \
 void FUNCTION_NAME(MATRIX_TYPE *A, TYPE x) \
 { \
-    const int size = A->size; \
+    const size_t size = A->size; \
     TYPE *M = A->M; \
-    for(int i = 0; i < size; i++) \
+    for(size_t i = 0; i < size; i++) \
         *M++ = x; \
 }
 
@@ -501,9 +513,6 @@ MATRIX_SETALL(matrix_complex_setall, matrix_complex_t, complex_t)
 #define MATRIX_EYE(FUNCTION_NAME, MTYPE, TYPE, ALLOC, SETALL) \
 MTYPE *FUNCTION_NAME(int dim, MTYPE *A) \
 { \
-    int min; \
-    TYPE *M; \
-\
     if(A == NULL) \
     { \
         A = ALLOC(dim,dim); \
@@ -511,8 +520,8 @@ MTYPE *FUNCTION_NAME(int dim, MTYPE *A) \
             return NULL; \
     } \
  \
-    min = A->min; \
-    M = A->M; \
+    const int min = A->min; \
+    TYPE *M = A->M; \
     SETALL(A,0); \
     for(int i = 0; i < min; i++) \
         *(M+i*(min+1)) = 1; \
@@ -631,7 +640,7 @@ MATRIX_TRACE(matrix_complex_trace, matrix_complex_t, complex_t)
  */
 double matrix_trace_AB(matrix_t *A, matrix_t *B)
 {
-    const int dim = A->rows;
+    const int dim = A->min;
     double sum = 0;
     double *M1 = A->M;
     double *M2 = B->M;
@@ -653,7 +662,7 @@ double matrix_trace_AB(matrix_t *A, matrix_t *B)
  */
 complex_t matrix_trace_complex_AB(matrix_complex_t *A, matrix_complex_t *B)
 {
-    const int dim = A->rows;
+    const int dim = A->min;
     complex_t sum = 0;
 
     for(int i = 0; i < dim; i++)
@@ -765,9 +774,9 @@ MATRIX_KRON(matrix_complex_kron, matrix_complex_t, complex_t, matrix_complex_all
 #define MATRIX_MULT_SCALAR(FUNCTION_NAME, MTYPE, TYPE) \
 void FUNCTION_NAME(MTYPE *A, TYPE alpha) \
 { \
-    const int max = A->rows*A->columns; \
+    const size_t size = A->size; \
     TYPE *M = A->M; \
-    for(int i = 0; i < max; i++) \
+    for(size_t i = 0; i < size; i++) \
         M[i] *= alpha; \
 }
 
@@ -795,7 +804,8 @@ MATRIX_MULT_SCALAR(matrix_complex_mult_scalar, matrix_complex_t, complex_t)
  *
  * alpha*A -> C
  *
- * If C is NULL, memory for the matrix C will be allocated.
+ * If C is NULL, memory for the matrix C will be allocated. If C is not NULL, C
+ * must have the correct dimension.
  *
  * @param [in] A real matrix
  * @param [in] alpha complex scalar
@@ -807,7 +817,7 @@ matrix_complex_t *matrix_mult_complex_scalar(matrix_t *A, complex_t alpha, matri
 {
     const int rows    = A->rows;
     const int columns = A->columns;
-    const double *AM     = A->M;
+    const double *AM  = A->M;
     complex_t *CM;
     if(C == NULL)
     {
@@ -817,7 +827,7 @@ matrix_complex_t *matrix_mult_complex_scalar(matrix_t *A, complex_t alpha, matri
     }
     CM = C->M;
 
-    for(int i = 0; i < rows*columns; i++)
+    for(size_t i = 0; i < C->size; i++)
         CM[i] = alpha*AM[i];
 
     return C;
@@ -894,7 +904,7 @@ MATRIX_MULT(matrix_complex_mult, matrix_complex_t, complex_t, matrix_complex_all
 #define MATRIX_ADD(FUNCTION_NAME, TYPE1, MTYPE1, TYPE2, MTYPE2) \
 int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
 { \
-    const int max = A->size; \
+    const size_t size = A->size; \
     TYPE1 *M3; \
     TYPE1 *M1 = A->M; \
     TYPE2 *M2 = B->M; \
@@ -907,7 +917,7 @@ int FUNCTION_NAME(MTYPE1 *A, MTYPE2 *B, TYPE1 alpha, MTYPE1 *C) \
     if(A->rows != B->rows || A->columns != B->columns) \
         return LIBHADES_ERROR_SHAPE; \
 \
-    for(int i = 0; i < max; i++) \
+    for(size_t i = 0; i < size; i++) \
         M3[i] = M1[i] + (alpha*M2[i]); \
 \
     return 0; \
@@ -1803,7 +1813,7 @@ MATRIX_TYPE *FUNCTION_NAME(FILE *stream, int *ret) \
         TRANSPOSE(M); \
 \
     M->min  = MIN(rows,columns); \
-    M->size = rows*columns; \
+    M->size = (size_t)rows*(size_t)columns; \
     M->view = 0; \
     M->type = 0; \
 \
