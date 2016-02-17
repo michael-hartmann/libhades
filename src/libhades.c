@@ -1115,8 +1115,8 @@ int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex
 {
     int N = A->min;
     int lwork = -1;
-    char *jobvr = "N";
-    char *jobvl = "N";
+    char jobvr = 'N';
+    char jobvl = 'N';
     int info;
     complex_t *evr  = NULL;
     complex_t *evl  = NULL;
@@ -1127,18 +1127,18 @@ int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex
     /* if vr is not NULL, calculate right eigenvectors */
     if(vr != NULL)
     {
-        jobvr = "V";
+        jobvr = 'V';
         evr   = vr->M;
     }
     /* if vl is not NULL, calculate left eigenvectors */
     if(vl != NULL)
     {
-        jobvl = "V";
+        jobvl = 'V';
         evl   = vl->M;
     }
 
     /* get the optimal size for workspace work */
-    zgeev_(jobvl, jobvr, &N, A->M, &N, w->M, evl, &N, evr, &N, &wopt, &lwork, rwork, &info);
+    zgeev_(&jobvl, &jobvr, &N, A->M, &N, w->M, evl, &N, evr, &N, &wopt, &lwork, rwork, &info);
 
     if(info != 0)
         return info;
@@ -1160,8 +1160,8 @@ int eig_complex_generic(matrix_complex_t *A, matrix_complex_t *w, matrix_complex
 
     /* SUBROUTINE ZGEEV( JOBVL, JOBVR, N, A, LDA, W, VL, LDVL, VR, LDVR, WORK, LWORK, RWORK, INFO ) */
     zgeev_(
-        jobvl,      /* left eigenvectors of A are not computed */
-        jobvr,      /* calculate/don't calculate right eigenvectors */
+        &jobvl,     /* left eigenvectors of A are not computed */
+        &jobvr,     /* calculate/don't calculate right eigenvectors */
         &N,         /* order of matrix A */
         A->M,       /* matrix A */
         &N,         /* LDA - leading dimension of A */
