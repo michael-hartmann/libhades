@@ -74,7 +74,7 @@
         int rows;    /**< rows of matrix */
         int columns; /**< columns of matrix */
         int min;     /**< MIN(rows,columns) */
-        int size;    /**< size = rows*columns */
+        size_t size; /**< size = rows*columns */
         int type;    /**< type of matrix */
         int view;    /**< matrix is a view */
         double *M;   /**< data in column major order */
@@ -87,7 +87,7 @@
         int rows;       /**< rows of matrix */
         int columns;    /**< columns of matrix */
         int min;        /**< MIN(rows,columns) */
-        int size;       /**< size = rows*columns */
+        size_t size;    /**< size = rows*columns */
         int type;       /**< type of matrix */
         int view;       /**< matrix is a view */
         complex_t *M;   /**< data in column major order */

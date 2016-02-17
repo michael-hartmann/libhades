@@ -17,6 +17,7 @@
 #include <libhades.h>
 #include <libhades/parse_npy_dict.h>
 
+
 /** \defgroup misc miscellaneous functions
  *  @{
  */
@@ -35,7 +36,7 @@ void *libhades_malloc(size_t size)
     void *ptr = malloc(size);
     if(ptr == NULL)
     {   
-        int err = errno;
+        const int err = errno;
         fprintf(stderr, "malloc can't allocate %zu bytes of memory: %s (%d)\n", size, strerror(err), err);
         abort();
     }   
@@ -170,7 +171,9 @@ void FUNCTION_NAME(MATRIX_TYPE *A, MATRIX_TYPE *B) \
     _swap(&A->min, &B->min); \
 \
     /* swap size */ \
-    _swap(&A->size, &B->size); \
+    size_t temp = A->size; \
+    A->size = B->size; \
+    B->size = temp; \
 \
     /* swap type */ \
     _swap(&A->type, &B->type); \
@@ -313,7 +316,7 @@ matrix_complex_t *matrix_tocomplex(matrix_t *A, matrix_complex_t *C)
             return NULL;
     }
 
-    for(int i = 0; i < C->size; i++)
+    for(size_t i = 0; i < C->size; i++)
         C->M[i] = A->M[i];
 
     return C;
