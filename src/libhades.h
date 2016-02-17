@@ -95,9 +95,9 @@
 
 
     /* prototypes */
-    void *xmalloc(size_t size);
-    void *xrealloc(void *ptr, size_t size);
-    void xfree(void *ptr);
+    void *libhades_malloc(size_t size);
+    void *libhades_realloc(void *ptr, size_t size);
+    void libhades_free(void *ptr);
 
     int argmin   (double list[], int size);
     int argmax   (double list[], int size);

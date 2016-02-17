@@ -1,7 +1,7 @@
 /**
  * @file   libhades.c
  * @author Michael Hartmann <michael.hartmann@physik.uni-augsburg.de>
- * @date   August, 2015
+ * @date   February, 2016
  * @brief  library to access low-level LAPACK functions
  */
 
@@ -30,7 +30,7 @@
  * @param [in] size amount of memory to allocate
  * @retval ptr pointer to the allocated memory
  */
-void *xmalloc(size_t size)
+void *libhades_malloc(size_t size)
 {
     void *ptr = malloc(size);
     if(ptr == NULL)
@@ -44,13 +44,13 @@ void *xmalloc(size_t size)
 
 /** @brief free wrapper
  *
- * This function frees the memory allocated by \ref xmalloc or \ref xrealloc
- * (or malloc and realloc). If the pointer given is NULL, an error is printed
- * to stderr and the program is aborted.
+ * This function frees the memory allocated by \ref libhades_malloc or \ref
+ * libhades_realloc (or malloc and realloc). If the pointer given is NULL, an error is
+ * printed to stderr and the program is aborted.
  *
  * @param [in] ptr pointer to the memory that should be freed
  */
-void xfree(void *ptr)
+void libhades_free(void *ptr)
 {
     if(ptr == NULL)
     {
@@ -64,14 +64,14 @@ void xfree(void *ptr)
 /** @brief realloc wrapper
  *
  * This function changes the size of the memory block pointed to by ptr to size
- * bytes. If ptr is NULL, this function behaves like \ref xmalloc. If an error
- * occures, an error is printed to stderr and the program is aboprted.
+ * bytes. If ptr is NULL, this function behaves like \ref libhades_malloc. If
+ * an error occures, an error is printed to stderr and the program is aboprted.
  *
  * @param [in] ptr pointer to the memory block
  * @param [in] size size of the memory block
  * @retval ptr_new pointer to the new memory block
  */
-void *xrealloc(void *ptr, size_t size)
+void *libhades_realloc(void *ptr, size_t size)
 {
     void *ptr_new = realloc(ptr, size);
 
@@ -85,9 +85,9 @@ void *xrealloc(void *ptr, size_t size)
     return ptr_new;
 }
 
-static void *(*malloc_cb)(size_t)          = &xmalloc;
-//static void *(*realloc_cb)(void *, size_t) = &xrealloc;
-static void  (*free_cb)(void *)            = &xfree;
+static void *(*malloc_cb)(size_t)          = &libhades_malloc;
+static void *(*realloc_cb)(void *, size_t) = &libhades_realloc;
+static void  (*free_cb)(void *)            = &libhades_free;
 
 
 /** macro to create functions argmin, argmax, argabsmin, argabsmax */
