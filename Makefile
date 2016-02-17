@@ -1,16 +1,20 @@
 .PHONY: all clean tests doc
 
 TESTS   = tests/
-OPT     = -O3
+
 CC      = gcc
+OPT     = -O3 -march=native -flto
+CFLAGS  = -std=c99
+CFLAGS += -Wall -Wextra -Wmissing-prototypes -Wstrict-prototypes -Wshadow -Wpointer-arith -Wcast-qual -Wwrite-strings -Wno-unused-parameter
+CFLAGS += -I src/
 
 all:
-	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/libhades.c -o libhades.o
-	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/optimize.c -o optimize.o
-	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/odeint.c   -o odeint.o
-	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/expm.c     -o expm.o
-	${CC} -std=c99 -Wall ${OPT} -I src/ -c -fpic src/parse_npy_dict.c -o parse_npy_dict.o
-	${CC} -shared -Wl,-soname,libhades.so -o libhades.so libhades.o optimize.o odeint.o expm.o parse_npy_dict.o
+	$(CC) $(CFLAGS) $(OPT) -c -fpic src/libhades.c -o libhades.o
+	$(CC) $(CFLAGS) $(OPT) -c -fpic src/optimize.c -o optimize.o
+	$(CC) $(CFLAGS) $(OPT) -c -fpic src/odeint.c   -o odeint.o
+	$(CC) $(CFLAGS) $(OPT) -c -fpic src/expm.c     -o expm.o
+	$(CC) $(CFLAGS) $(OPT) -c -fpic src/parse_npy_dict.c -o parse_npy_dict.o
+	$(CC) $(OPT) -shared -Wl,-soname,libhades.so -o libhades.so libhades.o optimize.o odeint.o expm.o parse_npy_dict.o
 
 install:
 	cp libhades.so /usr/lib
