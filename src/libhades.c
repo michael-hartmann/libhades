@@ -1940,7 +1940,7 @@ void FUNCTION_NAME(MATRIX_TYPE *M, FILE *stream) \
  * @param [in] A      matrix to be dumped to file
  * @param [in] stream file handle of opened file
  */
-MATRIX_SAVE_TO_STREAM(matrix_save_to_stream, double, matrix_t, "<d8");
+MATRIX_SAVE_TO_STREAM(matrix_save_to_stream, double, matrix_t, "<f8");
 
 /** @brief Save complex matrix A to stream
  *
