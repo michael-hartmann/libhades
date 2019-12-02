@@ -150,7 +150,7 @@ tests.
 License information
 -------------------
 
-libhades is free software licensed under the GNU GPL Version 2.
+The code is in the public domain, see the LICENSE file.
 
 
 Bibliography
